@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { initializeDatabase } from './db/index.js';
 import { healthRoutes } from './routes/health.js';
+import { authRoutes } from './routes/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -45,6 +46,7 @@ try {
 
 // Register routes
 await fastify.register(healthRoutes);
+await fastify.register(authRoutes);
 
 // Start server
 try {

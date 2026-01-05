@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import * as crypto from 'crypto';
+import bcrypt from 'bcrypt';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -33,8 +33,8 @@ export function initializeDatabase() {
   const existingUser = database.prepare('SELECT id FROM users WHERE username = ?').get('admin');
 
   if (!existingUser) {
-    // Simple hash for now (will use bcrypt in Milestone 2)
-    const passwordHash = crypto.createHash('sha256').update('admin123').digest('hex');
+    // Hash password with bcrypt (synchronous for initialization)
+    const passwordHash = bcrypt.hashSync('admin123', 10);
 
     database.prepare(`
       INSERT INTO users (username, password_hash, role)
