@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker:*)",
+      "Bash(npm --version)",
+      "Bash(node --version)",
+      "WebSearch",
+      "Bash(npm create:*)",
+      "Bash(npm run build:*)",
+      "Bash(cat:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
