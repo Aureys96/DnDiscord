@@ -47,3 +47,23 @@ export const HealthResponseSchema = z.object({
   dmUser: z.string(),
 });
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
+
+// Authentication types
+export const LoginRequestSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+export type LoginRequest = z.infer<typeof LoginRequestSchema>;
+
+export const RegisterRequestSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters').max(30, 'Username must be at most 30 characters'),
+  password: z.string().min(6, 'Password must be at least 6 characters').max(100, 'Password must be at most 100 characters'),
+  role: UserRoleSchema.optional().default('player'),
+});
+export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
+
+export const AuthResponseSchema = z.object({
+  token: z.string(),
+  user: UserSchema,
+});
+export type AuthResponse = z.infer<typeof AuthResponseSchema>;
