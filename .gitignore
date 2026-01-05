@@ -37,3 +37,4 @@ Thumbs.db
 
 # Testing
 coverage/
+.claude/settings.local.json
