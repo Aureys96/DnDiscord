@@ -19,6 +19,122 @@
 - Keep components small and focused
 - Extract reusable logic into custom hooks
 
+## UI/UX Guidelines
+
+**Reference Design Documents:**
+- `docs/design/LAYOUT.md` - Application layout and structure
+- `docs/design/THEME.md` - Colors, typography, and visual styling
+- `docs/design/COMPONENTS.md` - Component specifications and states
+
+### Design Philosophy
+- **Discord-inspired:** Follow Discord's proven layout patterns (three-column, sidebars, bottom controls)
+- **Dark theme first:** Dark theme only for now (reduces eye strain during long DnD sessions)
+- **DnD-focused:** Highlight DM tools, dice roller, and role distinctions
+- **Consistency:** Use the same component patterns throughout the application
+
+### Layout Rules
+- Three-column layout: Room List (64px) → Channel Sidebar (240px) → Main Content (flex) → Members Sidebar (240px)
+- User controls always at bottom-left (mic, deafen, settings)
+- Chat input always at bottom of main content area
+- Sidebars collapsible on smaller screens
+- Mobile: Single column with bottom tab navigation
+
+### Color Palette (Dark Theme)
+```
+Backgrounds:     gray-900 → gray-800 → gray-700 → gray-600 (hierarchy)
+Text:            gray-50 (primary) → gray-300 → gray-400 → gray-500 (muted)
+Accent:          violet-500 (primary actions, links, focus rings)
+Success/Online:  emerald-500
+Warning/Idle:    amber-500
+Error/Muted:     red-500
+DM Role:         amber-500 (gold crown theme)
+Player Role:     violet-500
+Speaking:        green-500 with glow effect
+```
+
+### Typography
+- Font: System font stack (Inter preferred)
+- Sizes: Use Tailwind scale (text-xs through text-2xl)
+- Weights: normal (400), medium (500), semibold (600)
+- Usernames: medium weight, role color
+- Timestamps: text-xs, text-muted
+
+### Component Standards
+- **Buttons:** 40px height default, rounded-md, clear hover/active states
+- **Inputs:** 40px height, bg-gray-800, border gray-700, focus ring violet-500
+- **Cards/Panels:** bg-gray-800, rounded-lg, shadow-lg
+- **Avatars:** rounded-full, sizes: 24/32/40/48/64/80px
+- **Icons:** 20px default, use consistent icon library (Lucide or Heroicons)
+
+### Interactive States
+Every interactive element must have:
+- Default state
+- Hover state (bg change or scale)
+- Active/pressed state
+- Focus state (ring for accessibility)
+- Disabled state (reduced opacity, no pointer)
+- Loading state (spinner or skeleton)
+
+### Spacing & Layout
+- Use Tailwind spacing scale consistently
+- Standard padding: 16px (p-4) for cards, 12px (p-3) for compact elements
+- Standard gap: 8px (gap-2) for tight, 16px (gap-4) for normal
+- Sidebar item height: 32-44px
+- Message padding: 16px horizontal, 4px vertical (grouped messages)
+
+### Animations
+- Duration: 150ms default (fast, responsive feel)
+- Easing: ease-in-out
+- Use for: hover states, modals, toasts, panels sliding
+- Speaking indicator: subtle pulse/glow animation
+- Avoid: excessive animations that distract from content
+
+### Responsive Breakpoints
+- Desktop: ≥1200px (full layout)
+- Tablet: 768-1199px (collapsible sidebars)
+- Mobile: <768px (single column, bottom nav)
+
+### Accessibility Requirements
+- Focus visible on all interactive elements
+- Color contrast: minimum 4.5:1 for text
+- Keyboard navigation for all features
+- ARIA labels on icon-only buttons
+- Screen reader friendly (semantic HTML)
+- PTT (Push-to-Talk) keyboard shortcut
+
+### DM vs Player UI
+- DM sees: Music player controls, Soundboard, Room management, User management
+- Players see: Read-only music info, their own mute controls
+- Use role checks to conditionally render DM-only features
+- Never hide features with CSS only - check permissions in logic
+
+### Component File Structure
+```
+src/components/
+├── ui/                 # Generic reusable components
+│   ├── Button.tsx
+│   ├── Input.tsx
+│   ├── Modal.tsx
+│   └── ...
+├── layout/            # Layout components
+│   ├── MainLayout.tsx
+│   ├── Sidebar.tsx
+│   └── ...
+├── features/          # Feature-specific components
+│   ├── auth/
+│   ├── chat/
+│   ├── voice/
+│   └── ...
+└── hooks/             # Custom hooks
+```
+
+### State Management (Zustand)
+- Auth store: user, token, login/logout actions
+- UI store: sidebar visibility, active modals
+- Chat store: messages, channels, send actions
+- Voice store: connection state, peers, mute state
+- Keep stores focused (single responsibility)
+
 ## Error Handling
 - Always handle errors gracefully
 - Provide user-friendly error messages
