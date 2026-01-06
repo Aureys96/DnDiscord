@@ -1,56 +1,61 @@
-import { useState, useEffect } from 'react';
-import type { HealthResponse } from '@dnd-voice/shared';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthStore } from './stores/authStore';
+import { ProtectedRoute } from './components/features/auth/ProtectedRoute';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { HomePage } from './pages/HomePage';
+import { Loader2 } from 'lucide-react';
 
-function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+function AppRoutes() {
+  const { user, isInitialized, initialize } = useAuthStore();
 
   useEffect(() => {
-    fetch('/api/health')
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Failed to fetch health status');
-        }
-        return res.json();
-      })
-      .then((data: HealthResponse) => {
-        setHealth(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
+    initialize();
+  }, [initialize]);
+
+  // Show loading while initializing auth state
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-white mb-4">
-          DnD Voice Chat
-        </h1>
+    <Routes>
+      {/* Public routes */}
+      <Route
+        path="/login"
+        element={user ? <Navigate to="/" replace /> : <LoginPage />}
+      />
+      <Route
+        path="/register"
+        element={user ? <Navigate to="/" replace /> : <RegisterPage />}
+      />
 
-        {loading && (
-          <p className="text-gray-400">Loading...</p>
-        )}
+      {/* Protected routes */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <HomePage />
+          </ProtectedRoute>
+        }
+      />
 
-        {error && (
-          <p className="text-red-500">Error: {error}</p>
-        )}
+      {/* Catch all - redirect to home */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
 
-        {health && (
-          <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-            <p className="text-green-400 mb-2">✓ Server Status: {health.status}</p>
-            <p className="text-gray-300">Default DM User: <span className="font-semibold text-white">{health.dmUser}</span></p>
-          </div>
-        )}
-
-        <p className="text-gray-500 text-sm mt-6">
-          Milestone 1: Full Stack Hello World
-        </p>
-      </div>
-    </div>
+function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 }
 

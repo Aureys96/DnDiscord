@@ -83,31 +83,69 @@ A self-hosted Discord-like voice and text chat application for Dungeons & Dragon
 
 ---
 
-## Upcoming Milestones
+### ✅ Milestone 3: Authentication UI + Zustand
+**Status:** COMPLETED
+**Completed:** 2026-01-06
 
-### 🔄 Milestone 3: Authentication UI + Zustand
-**Status:** NEXT UP
-
-**Goals:**
-- Create login and registration forms in React
-- Implement Zustand store for auth state
-- Protected routes in React Router
-- Persistent login (token in localStorage)
+**Implemented:**
+- Login page with form validation and error handling
+- Registration page with role selection (Player/DM)
+- Zustand auth store with localStorage persistence
+- Protected routes with React Router
+- Automatic token validation on app load
 - Logout functionality
-- User profile display
+- User profile display with role badge
 
-**Deliverables:**
-- Login page with form validation
-- Registration page
-- Auth state management with Zustand
-- Token storage and retrieval
-- Automatic token refresh (if time permits)
-- Protected route wrapper component
+**Frontend Components:**
+- Reusable UI components: `Button`, `Input`, `Card`
+- Auth store with login/register/logout/initialize actions
+- ProtectedRoute wrapper component
+- API client with automatic token injection
+
+**Pages:**
+- `/login` - Login form with username/password
+- `/register` - Registration with role selection
+- `/` - Protected home page with user info
+
+**Features:**
+- Password visibility toggle
+- Client-side form validation
+- Loading states with spinner
+- Error message display
+- Automatic redirect after login/logout
+- Token persistence across page reloads
+
+**Dependencies Added:**
+- `zustand` - State management
+- `react-router-dom` - Routing
+- `lucide-react` - Icons
+
+**File Structure:**
+```
+src/
+├── components/
+│   ├── ui/           # Button, Input, Card
+│   └── features/
+│       └── auth/     # ProtectedRoute
+├── stores/
+│   └── authStore.ts  # Zustand auth store
+├── pages/
+│   ├── LoginPage.tsx
+│   ├── RegisterPage.tsx
+│   └── HomePage.tsx
+└── lib/
+    └── api.ts        # API client
+```
+
+**Commits:**
+- `feat(ui): add authentication UI with Zustand state management`
 
 ---
 
-### Milestone 4: Basic Text Chat (Global)
-**Status:** PLANNED
+## Upcoming Milestones
+
+### 🔄 Milestone 4: Basic Text Chat (Global)
+**Status:** NEXT UP
 
 **Goals:**
 - Socket.IO integration for real-time communication
@@ -385,12 +423,14 @@ A self-hosted Discord-like voice and text chat application for Dungeons & Dragon
 ## Current Status
 
 **Last Updated:** 2026-01-06
-**Completed Milestones:** 2/16
-**Progress:** 12.5%
-**Next Milestone:** Authentication UI + Zustand
+**Completed Milestones:** 3/16
+**Progress:** 18.75%
+**Next Milestone:** Basic Text Chat (Global)
 
 **Recent Activity:**
-- ✅ Set up comprehensive Jest testing infrastructure
-- ✅ Implemented JWT authentication with bcrypt
-- ✅ All 33 tests passing
-- ✅ Documented testing strategy in claude.md
+- ✅ Implemented authentication UI with React
+- ✅ Set up Zustand for state management
+- ✅ Created Login and Register pages with form validation
+- ✅ Protected routes with React Router
+- ✅ Token persistence in localStorage
+- ✅ Created comprehensive UI/UX design system
