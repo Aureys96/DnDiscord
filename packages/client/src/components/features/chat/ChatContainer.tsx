@@ -1,12 +1,18 @@
 import { useEffect } from 'react';
-import { MessageCircle, Loader2, AlertCircle, WifiOff } from 'lucide-react';
+import { Loader2, AlertCircle, WifiOff, Hash, Globe } from 'lucide-react';
 import { useChatStore } from '../../../stores/chatStore';
+import { useRoomStore } from '../../../stores/roomStore';
 import { MessageList } from './MessageList';
 import { ChatInput } from './ChatInput';
 
-export function ChatContainer() {
+interface ChatContainerProps {
+  roomId?: number | null;
+}
+
+export function ChatContainer({ roomId }: ChatContainerProps) {
   const {
     messages,
+    currentRoomId,
     isConnected,
     isConnecting,
     typingUsers,
@@ -14,8 +20,14 @@ export function ChatContainer() {
     connect,
     sendMessage,
     setTyping,
+    setCurrentRoom,
     clearError,
   } = useChatStore();
+
+  const { rooms } = useRoomStore();
+
+  // Get current room info
+  const currentRoom = currentRoomId ? rooms.find((r) => r.id === currentRoomId) : null;
 
   // Connect to socket when component mounts
   useEffect(() => {
@@ -25,6 +37,13 @@ export function ChatContainer() {
       // Don't disconnect on unmount - keep connection alive
     };
   }, [connect]);
+
+  // Sync room from props to store
+  useEffect(() => {
+    if (roomId !== undefined && roomId !== currentRoomId) {
+      setCurrentRoom(roomId);
+    }
+  }, [roomId, currentRoomId, setCurrentRoom]);
 
   // Connection status indicator
   const renderConnectionStatus = () => {
@@ -81,8 +100,17 @@ export function ChatContainer() {
     <div className="flex flex-col h-full bg-gray-800 rounded-lg overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-700">
-        <MessageCircle className="w-5 h-5 text-violet-400" />
-        <h2 className="font-medium text-gray-100">Global Chat</h2>
+        {currentRoom ? (
+          <>
+            <Hash className="w-5 h-5 text-violet-400" />
+            <h2 className="font-medium text-gray-100">{currentRoom.name}</h2>
+          </>
+        ) : (
+          <>
+            <Globe className="w-5 h-5 text-violet-400" />
+            <h2 className="font-medium text-gray-100">Global Chat</h2>
+          </>
+        )}
         {isConnected && (
           <span className="ml-auto flex items-center gap-1 text-xs text-emerald-400">
             <span className="w-2 h-2 bg-emerald-400 rounded-full" />

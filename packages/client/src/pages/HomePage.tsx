@@ -1,19 +1,37 @@
+import { useState } from 'react';
 import { Crown, User, LogOut } from 'lucide-react';
 import { Button } from '../components/ui';
 import { useAuthStore } from '../stores/authStore';
+import { useChatStore } from '../stores/chatStore';
+import { useRoomStore } from '../stores/roomStore';
 import { ChatContainer } from '../components/features/chat';
+import { RoomList } from '../components/features/rooms';
 
 export function HomePage() {
   const { user, logout } = useAuthStore();
+  const { setCurrentRoom } = useChatStore();
+  const { joinRoom, leaveRoom } = useRoomStore();
+  const [currentRoomId, setCurrentRoomId] = useState<number | null>(null);
 
   if (!user) return null;
 
   const isDM = user.role === 'dm';
 
+  const handleRoomSelect = async (roomId: number | null) => {
+    if (roomId === null) {
+      // Go back to global
+      await leaveRoom();
+    } else {
+      await joinRoom(roomId);
+    }
+    setCurrentRoomId(roomId);
+    setCurrentRoom(roomId);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col">
+    <div className="h-screen bg-gray-900 flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-gray-800 border-b border-gray-700">
+      <header className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-gray-800 border-b border-gray-700">
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-semibold text-gray-50">DnD Voice Chat</h1>
         </div>
@@ -53,12 +71,19 @@ export function HomePage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex p-4 gap-4 overflow-hidden">
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar - Room List */}
+        <aside className="w-60 flex-shrink-0 bg-gray-850 border-r border-gray-700 overflow-hidden">
+          <RoomList onRoomSelect={handleRoomSelect} />
+        </aside>
+
         {/* Chat Panel */}
-        <div className="flex-1 max-w-3xl mx-auto h-full">
-          <ChatContainer />
-        </div>
-      </main>
+        <main className="flex-1 flex flex-col p-4 overflow-hidden">
+          <div className="flex-1 overflow-hidden">
+            <ChatContainer roomId={currentRoomId} />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

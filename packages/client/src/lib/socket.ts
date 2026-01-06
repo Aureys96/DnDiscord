@@ -115,10 +115,59 @@ export function getMessages(
   });
 }
 
-export function emitTypingStart(): void {
-  socket?.emit('typing_start');
+export function emitTypingStart(roomId?: number): void {
+  socket?.emit('typing_start', roomId ? { roomId } : undefined);
 }
 
-export function emitTypingStop(): void {
-  socket?.emit('typing_stop');
+export function emitTypingStop(roomId?: number): void {
+  socket?.emit('typing_stop', roomId ? { roomId } : undefined);
+}
+
+export interface RoomUser {
+  userId: number;
+  username: string;
+  role: string;
+}
+
+export function joinRoom(
+  roomId: number
+): Promise<{ success: boolean; roomId?: number; users?: RoomUser[]; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected to server' });
+      return;
+    }
+
+    socket.emit('join_room', { roomId }, (response: { success: boolean; roomId?: number; users?: RoomUser[]; error?: string }) => {
+      resolve(response);
+    });
+  });
+}
+
+export function leaveRoom(): Promise<{ success: boolean; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected to server' });
+      return;
+    }
+
+    socket.emit('leave_room', (response: { success: boolean; error?: string }) => {
+      resolve(response);
+    });
+  });
+}
+
+export function getRoomUsers(
+  roomId: number
+): Promise<{ success: boolean; users?: RoomUser[]; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected to server' });
+      return;
+    }
+
+    socket.emit('get_room_users', { roomId }, (response: { success: boolean; users?: RoomUser[]; error?: string }) => {
+      resolve(response);
+    });
+  });
 }

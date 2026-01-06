@@ -18,8 +18,19 @@ export const RoomSchema = z.object({
   name: z.string(),
   createdBy: z.number(),
   createdAt: z.string(),
+  creatorUsername: z.string().optional(),
 });
 export type Room = z.infer<typeof RoomSchema>;
+
+export const CreateRoomRequestSchema = z.object({
+  name: z.string().min(1, 'Room name is required').max(50, 'Room name must be at most 50 characters'),
+});
+export type CreateRoomRequest = z.infer<typeof CreateRoomRequestSchema>;
+
+export const UpdateRoomRequestSchema = z.object({
+  name: z.string().min(1, 'Room name is required').max(50, 'Room name must be at most 50 characters'),
+});
+export type UpdateRoomRequest = z.infer<typeof UpdateRoomRequestSchema>;
 
 // Message types
 export const MessageTypeSchema = z.enum(['room', 'global', 'dm', 'roll']);

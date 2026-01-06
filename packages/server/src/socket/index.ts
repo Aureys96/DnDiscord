@@ -39,6 +39,30 @@ interface MessageResponse {
 // Store connected users
 const connectedUsers = new Map<number, AuthenticatedSocket>();
 
+// Track which room each user is currently in (null = global only)
+const userCurrentRoom = new Map<number, number | null>();
+
+// Track users in each room for presence
+const roomUsers = new Map<number, Set<number>>();
+
+function getRoomUserList(roomId: number): Array<{ userId: number; username: string; role: string }> {
+  const userIds = roomUsers.get(roomId) || new Set();
+  const users: Array<{ userId: number; username: string; role: string }> = [];
+
+  for (const userId of userIds) {
+    const socket = connectedUsers.get(userId);
+    if (socket) {
+      users.push({
+        userId: socket.user.id,
+        username: socket.user.username,
+        role: socket.user.role,
+      });
+    }
+  }
+
+  return users;
+}
+
 export function setupSocketIO(httpServer: HTTPServer): Server {
   const io = new Server(httpServer, {
     cors: {
@@ -199,22 +223,163 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
     });
 
     // Handle typing indicator
-    authSocket.on('typing_start', () => {
-      authSocket.to('global').emit('user_typing', {
+    authSocket.on('typing_start', (payload?: { roomId?: number }) => {
+      const roomId = payload?.roomId;
+      const targetRoom = roomId ? `room:${roomId}` : 'global';
+      authSocket.to(targetRoom).emit('user_typing', {
         userId: user.id,
         username: user.username,
+        roomId: roomId || null,
       });
     });
 
-    authSocket.on('typing_stop', () => {
-      authSocket.to('global').emit('user_stopped_typing', {
+    authSocket.on('typing_stop', (payload?: { roomId?: number }) => {
+      const roomId = payload?.roomId;
+      const targetRoom = roomId ? `room:${roomId}` : 'global';
+      authSocket.to(targetRoom).emit('user_stopped_typing', {
         userId: user.id,
+        roomId: roomId || null,
       });
+    });
+
+    // Handle join room
+    authSocket.on('join_room', (payload: { roomId: number }, callback) => {
+      try {
+        const { roomId } = payload;
+
+        if (!roomId || typeof roomId !== 'number') {
+          return callback?.({ error: 'Invalid room ID' });
+        }
+
+        // Leave current room if in one
+        const currentRoomId = userCurrentRoom.get(user.id);
+        if (currentRoomId !== null && currentRoomId !== undefined) {
+          authSocket.leave(`room:${currentRoomId}`);
+
+          // Remove from room users tracking
+          const currentRoomUsers = roomUsers.get(currentRoomId);
+          if (currentRoomUsers) {
+            currentRoomUsers.delete(user.id);
+            if (currentRoomUsers.size === 0) {
+              roomUsers.delete(currentRoomId);
+            }
+          }
+
+          // Notify others in the old room
+          io.to(`room:${currentRoomId}`).emit('user_left_room', {
+            userId: user.id,
+            username: user.username,
+            roomId: currentRoomId,
+          });
+        }
+
+        // Join new room
+        authSocket.join(`room:${roomId}`);
+        userCurrentRoom.set(user.id, roomId);
+
+        // Add to room users tracking
+        if (!roomUsers.has(roomId)) {
+          roomUsers.set(roomId, new Set());
+        }
+        roomUsers.get(roomId)!.add(user.id);
+
+        // Notify others in the new room
+        io.to(`room:${roomId}`).emit('user_joined_room', {
+          userId: user.id,
+          username: user.username,
+          role: user.role,
+          roomId,
+        });
+
+        // Return success with room users
+        callback?.({
+          success: true,
+          roomId,
+          users: getRoomUserList(roomId),
+        });
+      } catch (error) {
+        console.error('Error joining room:', error);
+        callback?.({ error: 'Failed to join room' });
+      }
+    });
+
+    // Handle leave room (go back to global only)
+    authSocket.on('leave_room', (callback) => {
+      try {
+        const currentRoomId = userCurrentRoom.get(user.id);
+
+        if (currentRoomId !== null && currentRoomId !== undefined) {
+          authSocket.leave(`room:${currentRoomId}`);
+
+          // Remove from room users tracking
+          const currentRoomUsers = roomUsers.get(currentRoomId);
+          if (currentRoomUsers) {
+            currentRoomUsers.delete(user.id);
+            if (currentRoomUsers.size === 0) {
+              roomUsers.delete(currentRoomId);
+            }
+          }
+
+          // Notify others in the room
+          io.to(`room:${currentRoomId}`).emit('user_left_room', {
+            userId: user.id,
+            username: user.username,
+            roomId: currentRoomId,
+          });
+
+          userCurrentRoom.set(user.id, null);
+        }
+
+        callback?.({ success: true });
+      } catch (error) {
+        console.error('Error leaving room:', error);
+        callback?.({ error: 'Failed to leave room' });
+      }
+    });
+
+    // Get room users
+    authSocket.on('get_room_users', (payload: { roomId: number }, callback) => {
+      try {
+        const { roomId } = payload;
+
+        if (!roomId || typeof roomId !== 'number') {
+          return callback?.({ error: 'Invalid room ID' });
+        }
+
+        callback?.({
+          success: true,
+          users: getRoomUserList(roomId),
+        });
+      } catch (error) {
+        console.error('Error getting room users:', error);
+        callback?.({ error: 'Failed to get room users' });
+      }
     });
 
     // Handle disconnect
     authSocket.on('disconnect', () => {
       console.log(`✗ User disconnected: ${user.username} (ID: ${user.id})`);
+
+      // Clean up room membership
+      const currentRoomId = userCurrentRoom.get(user.id);
+      if (currentRoomId !== null && currentRoomId !== undefined) {
+        const currentRoomUsers = roomUsers.get(currentRoomId);
+        if (currentRoomUsers) {
+          currentRoomUsers.delete(user.id);
+          if (currentRoomUsers.size === 0) {
+            roomUsers.delete(currentRoomId);
+          }
+        }
+
+        // Notify others in the room
+        io.to(`room:${currentRoomId}`).emit('user_left_room', {
+          userId: user.id,
+          username: user.username,
+          roomId: currentRoomId,
+        });
+      }
+
+      userCurrentRoom.delete(user.id);
       connectedUsers.delete(user.id);
 
       io.to('global').emit('user_left', {

@@ -6,6 +6,7 @@ import { dirname, join } from 'path';
 import { initializeDatabase } from './db/index.js';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
+import { roomRoutes } from './routes/rooms.js';
 import { setupSocketIO } from './socket/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -48,6 +49,7 @@ try {
 // Register routes
 await fastify.register(healthRoutes);
 await fastify.register(authRoutes);
+await fastify.register(roomRoutes);
 
 // Start server
 try {

@@ -208,28 +208,78 @@ packages/client/src/
 
 ---
 
-## Upcoming Milestones
+### ✅ Milestone 5: Room System
+**Status:** COMPLETED
+**Completed:** 2026-01-07
 
-### 🔄 Milestone 5: Room System
-**Status:** NEXT UP
+**Implemented:**
+- Room CRUD operations (create, read, update, delete)
+- Room-specific chat with isolated messages
+- Room list sidebar with Discord-inspired design
+- Real-time user presence tracking per room
+- Room switching with automatic message loading
 
-**Goals:**
-- Create/delete/join rooms
-- Room-specific chat
-- Room list UI
-- User presence in rooms
+**Backend:**
+- Room queries (create, getAll, getById, getByCreator, delete, update)
+- REST API endpoints for rooms (GET, POST, PUT, DELETE /api/rooms)
+- Socket.IO events: `join_room`, `leave_room`, `get_room_users`
+- Room presence events: `user_joined_room`, `user_left_room`
+- Room-scoped typing indicators
 
-**Deliverables:**
-- Rooms table in database
-- Room management API endpoints
-- Room creation/deletion UI
-- Room switching functionality
-- User list per room
+**Frontend Components:**
+- `RoomList` - Sidebar with global channel and room channels
+- `roomStore` - Zustand store for room state and API calls
+- Updated `chatStore` - Room-aware message handling
+- Updated `ChatContainer` - Dynamic header based on current room
+
+**Features:**
+- DM-only room creation (players see "Only DMs can create rooms")
+- Room deletion (creator only)
+- Automatic room cleanup on disconnect
+- Messages filtered by current context (global vs room)
+- Typing indicators scoped to current room
+- Smooth room switching with message history reload
+
+**API Endpoints:**
+- `GET /api/rooms` - List all rooms
+- `GET /api/rooms/:id` - Get single room
+- `POST /api/rooms` - Create room (DM only)
+- `PUT /api/rooms/:id` - Update room (creator only)
+- `DELETE /api/rooms/:id` - Delete room (creator only)
+
+**File Structure:**
+```
+packages/server/src/
+├── routes/
+│   └── rooms.ts           # Room REST API
+├── socket/
+│   └── index.ts           # Added room events
+└── db/
+    └── index.ts           # Added getRoomQueries()
+
+packages/client/src/
+├── components/features/rooms/
+│   ├── RoomList.tsx       # Room sidebar
+│   └── index.ts
+├── stores/
+│   ├── roomStore.ts       # Room Zustand store
+│   └── chatStore.ts       # Updated for room awareness
+├── lib/
+│   ├── api.ts             # Added fetch() method
+│   └── socket.ts          # Added room functions
+└── pages/
+    └── HomePage.tsx       # Sidebar layout
+```
+
+**Commits:**
+- `feat(rooms): add room system with CRUD and real-time presence`
 
 ---
 
-### Milestone 6: Direct Messages (DMs)
-**Status:** PLANNED
+## Upcoming Milestones
+
+### 🔄 Milestone 6: Direct Messages (DMs)
+**Status:** NEXT UP
 
 **Goals:**
 - Private 1-on-1 messaging
@@ -470,15 +520,15 @@ packages/client/src/
 
 ## Current Status
 
-**Last Updated:** 2026-01-06
-**Completed Milestones:** 4/16
-**Progress:** 25%
-**Next Milestone:** Room System
+**Last Updated:** 2026-01-07
+**Completed Milestones:** 5/16
+**Progress:** 31.25%
+**Next Milestone:** Direct Messages (DMs)
 
 **Recent Activity:**
-- ✅ Implemented Socket.IO server with JWT authentication
-- ✅ Created real-time global chat with message persistence
-- ✅ Built Chat UI components (ChatContainer, MessageList, ChatInput)
-- ✅ Added typing indicators and auto-scroll
-- ✅ Integrated chat into HomePage layout
-- ✅ Connection status indicators and error handling
+- ✅ Implemented room CRUD with REST API endpoints
+- ✅ Added Socket.IO room events (join, leave, presence)
+- ✅ Built RoomList sidebar component
+- ✅ Added room-aware chat with isolated messages
+- ✅ Implemented user presence tracking per room
+- ✅ Updated HomePage with Discord-inspired sidebar layout
