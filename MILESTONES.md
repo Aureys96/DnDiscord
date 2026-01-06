@@ -478,8 +478,9 @@ packages/client/src/
 - ✅ User login (6 tests)
 - ✅ Protected routes (5 tests)
 - ✅ JWT middleware (13 tests)
+- ✅ Room CRUD operations (18 tests)
 
-**Total:** 33 tests passing
+**Total:** 51 tests passing
 
 **Testing Strategy:**
 - Integration tests first (real server, real database)
