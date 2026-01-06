@@ -151,7 +151,8 @@ src/components/
 ## Testing Strategy
 
 ### Manual Testing
-- Test each milestone in Chrome browser
+- Test each milestone in Chrome browser using the browser automation tools
+- **Chrome Extension:** The user disables the Chrome extension for security. If browser automation fails, ask the user to enable it before testing.
 - Test with 2+ browser windows for real-time features
 - Verify database persistence by refreshing the page
 - Check console for errors after each implementation
