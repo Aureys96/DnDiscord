@@ -45,11 +45,12 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
       role: decoded.role,
     };
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      return reply.status(401).send({ error: 'Invalid token' });
-    }
+    // Check TokenExpiredError first since it extends JsonWebTokenError
     if (error instanceof jwt.TokenExpiredError) {
       return reply.status(401).send({ error: 'Token expired' });
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      return reply.status(401).send({ error: 'Invalid token' });
     }
     request.log.error(error);
     return reply.status(500).send({ error: 'Internal server error' });
