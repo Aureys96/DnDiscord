@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import Database, { type Database as DatabaseType, type Statement } from 'better-sqlite3';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -7,9 +7,9 @@ import bcrypt from 'bcrypt';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let db: Database.Database;
+let db: DatabaseType;
 
-export function getDatabase() {
+export function getDatabase(): DatabaseType {
   if (!db) {
     const dbPath = process.env.DATABASE_PATH || join(__dirname, '../../../data/dnd.db');
     const dbFullPath = dbPath.startsWith('/') ? dbPath : join(__dirname, dbPath);
@@ -46,12 +46,57 @@ export function initializeDatabase() {
 }
 
 // User queries
-export function getUserQueries() {
+export function getUserQueries(): {
+  getByUsername: Statement;
+  getById: Statement;
+  create: Statement;
+} {
   const database = getDatabase();
   return {
     getByUsername: database.prepare('SELECT * FROM users WHERE username = ?'),
     getById: database.prepare('SELECT * FROM users WHERE id = ?'),
     create: database.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)'),
+  };
+}
+
+// Message queries
+export function getMessageQueries(): {
+  create: Statement;
+  getGlobalMessages: Statement;
+  getRoomMessages: Statement;
+  getById: Statement;
+} {
+  const database = getDatabase();
+  return {
+    create: database.prepare(`
+      INSERT INTO messages (room_id, user_id, content, type, recipient_id, roll_result)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `),
+    getGlobalMessages: database.prepare(`
+      SELECT m.id, m.room_id, m.user_id, m.content, m.timestamp, m.type, m.recipient_id, m.roll_result,
+             u.username, u.role as user_role
+      FROM messages m
+      JOIN users u ON m.user_id = u.id
+      WHERE m.type = 'global'
+      ORDER BY m.timestamp DESC
+      LIMIT ?
+    `),
+    getRoomMessages: database.prepare(`
+      SELECT m.id, m.room_id, m.user_id, m.content, m.timestamp, m.type, m.recipient_id, m.roll_result,
+             u.username, u.role as user_role
+      FROM messages m
+      JOIN users u ON m.user_id = u.id
+      WHERE m.room_id = ?
+      ORDER BY m.timestamp DESC
+      LIMIT ?
+    `),
+    getById: database.prepare(`
+      SELECT m.id, m.room_id, m.user_id, m.content, m.timestamp, m.type, m.recipient_id, m.roll_result,
+             u.username, u.role as user_role
+      FROM messages m
+      JOIN users u ON m.user_id = u.id
+      WHERE m.id = ?
+    `),
   };
 }
 

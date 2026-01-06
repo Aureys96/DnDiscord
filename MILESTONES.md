@@ -142,28 +142,76 @@ src/
 
 ---
 
-## Upcoming Milestones
+### ✅ Milestone 4: Basic Text Chat (Global)
+**Status:** COMPLETED
+**Completed:** 2026-01-06
 
-### 🔄 Milestone 4: Basic Text Chat (Global)
-**Status:** NEXT UP
+**Implemented:**
+- Socket.IO server with JWT authentication middleware
+- Real-time message broadcasting to global room
+- Message persistence in SQLite database
+- Chat UI with auto-scroll and typing indicators
+- Connection status indicators (connected/disconnected/reconnecting)
 
-**Goals:**
-- Socket.IO integration for real-time communication
-- Global chat room
-- Message persistence in database
-- Real-time message broadcasting
+**Backend:**
+- Socket.IO integrated with Fastify HTTP server
+- JWT token authentication on socket connection
+- Message queries (create, getGlobalMessages, getById)
+- Events: `send_message`, `get_messages`, `new_message`, `typing_start`, `typing_stop`
+- User presence events: `user_joined`, `user_left`
 
-**Deliverables:**
-- Socket.IO server setup
-- Chat UI component
-- Message list with auto-scroll
-- Send message functionality
-- Real-time message updates
+**Frontend Components:**
+- `ChatContainer` - Main chat wrapper with connection management
+- `MessageList` - Displays messages with role-based styling (DM = amber, Player = violet)
+- `ChatInput` - Textarea with send button, Enter to send, Shift+Enter for new line
+- `chatStore` - Zustand store for chat state and socket actions
+- `socket.ts` - Socket.IO client service with typed events
+
+**Features:**
+- Real-time message delivery
+- Auto-scroll when user is near bottom
+- Typing indicators with animated dots
+- Message history loading (last 50 messages)
+- Connection error handling and reconnection
+- User role display (DM crown icon, Player user icon)
+- Timestamp formatting (today's time vs date)
+- Max message length (2000 characters)
+
+**Dependencies Added:**
+- `socket.io` - Server-side real-time engine
+- `socket.io-client` - Client-side real-time engine
+
+**File Structure:**
+```
+packages/server/src/
+├── socket/
+│   └── index.ts       # Socket.IO setup with auth
+└── db/
+    └── index.ts       # Added getMessageQueries()
+
+packages/client/src/
+├── components/features/chat/
+│   ├── ChatContainer.tsx
+│   ├── ChatInput.tsx
+│   ├── MessageList.tsx
+│   └── index.ts
+├── stores/
+│   └── chatStore.ts   # Chat Zustand store
+├── lib/
+│   └── socket.ts      # Socket.IO client
+└── pages/
+    └── HomePage.tsx   # Updated with chat panel
+```
+
+**Commits:**
+- `feat(chat): add Socket.IO real-time global chat`
 
 ---
 
-### Milestone 5: Room System
-**Status:** PLANNED
+## Upcoming Milestones
+
+### 🔄 Milestone 5: Room System
+**Status:** NEXT UP
 
 **Goals:**
 - Create/delete/join rooms
@@ -423,14 +471,14 @@ src/
 ## Current Status
 
 **Last Updated:** 2026-01-06
-**Completed Milestones:** 3/16
-**Progress:** 18.75%
-**Next Milestone:** Basic Text Chat (Global)
+**Completed Milestones:** 4/16
+**Progress:** 25%
+**Next Milestone:** Room System
 
 **Recent Activity:**
-- ✅ Implemented authentication UI with React
-- ✅ Set up Zustand for state management
-- ✅ Created Login and Register pages with form validation
-- ✅ Protected routes with React Router
-- ✅ Token persistence in localStorage
-- ✅ Created comprehensive UI/UX design system
+- ✅ Implemented Socket.IO server with JWT authentication
+- ✅ Created real-time global chat with message persistence
+- ✅ Built Chat UI components (ChatContainer, MessageList, ChatInput)
+- ✅ Added typing indicators and auto-scroll
+- ✅ Integrated chat into HomePage layout
+- ✅ Connection status indicators and error handling

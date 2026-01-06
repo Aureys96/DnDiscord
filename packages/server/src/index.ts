@@ -6,6 +6,7 @@ import { dirname, join } from 'path';
 import { initializeDatabase } from './db/index.js';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
+import { setupSocketIO } from './socket/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -40,7 +41,7 @@ try {
   initializeDatabase();
   fastify.log.info('✓ Database initialized');
 } catch (error) {
-  fastify.log.error('Failed to initialize database:', error);
+  fastify.log.error({ err: error }, 'Failed to initialize database');
   process.exit(1);
 }
 
@@ -51,6 +52,12 @@ await fastify.register(authRoutes);
 // Start server
 try {
   await fastify.listen({ port: PORT, host: HOST });
+
+  // Setup Socket.IO after Fastify is listening
+  const httpServer = fastify.server;
+  const io = setupSocketIO(httpServer);
+  fastify.log.info('✓ Socket.IO initialized');
+
   fastify.log.info(`🚀 Server listening on http://${HOST}:${PORT}`);
 } catch (err) {
   fastify.log.error(err);
