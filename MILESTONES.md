@@ -1,0 +1,396 @@
+# DnD Voice Chat - Project Milestones
+
+## Project Overview
+
+A self-hosted Discord-like voice and text chat application for Dungeons & Dragons sessions.
+
+**Tech Stack:**
+- **Backend:** Node.js, Fastify, Socket.IO, SQLite, JWT
+- **Frontend:** React, Vite, Tailwind CSS, Zustand
+- **Real-time:** WebRTC (P2P mesh), Socket.IO (signaling)
+- **Deployment:** Self-hosted on VPS
+
+**Core Features:**
+- Voice chat with WebRTC (P2P mesh, max 6 users)
+- Text chat (global, room-specific, DMs) with dice roller
+- Background music streaming from YouTube
+- Soundboard for sound effects
+- Multiple rooms with audio isolation
+- Role-based permissions (DM vs Players)
+
+---
+
+## Milestone Progress
+
+### ✅ Milestone 1: Hello World Full-Stack
+**Status:** COMPLETED
+**Completed:** 2026-01-05
+
+**Implemented:**
+- Monorepo structure with npm workspaces
+- Three packages: `shared`, `server`, `client`
+- Shared Zod schemas in `@dnd-voice/shared`
+- Fastify backend with health endpoint
+- React frontend with Vite and Tailwind CSS
+- Full-stack communication verified
+- SQLite database with schema
+
+**Tests:**
+- Health endpoint returns correct status ✓
+- Database connection and admin user creation ✓
+
+**Commits:**
+- `feat: initialize monorepo with full-stack hello world`
+
+---
+
+### ✅ Milestone 2: JWT Authentication
+**Status:** COMPLETED
+**Completed:** 2026-01-06
+
+**Implemented:**
+- User registration with bcrypt password hashing (10 salt rounds)
+- User login with JWT token generation (24h expiration)
+- Protected routes with JWT middleware
+- Role-based access control (DM vs Player)
+- Zod validation schemas for authentication
+- Proper error handling for auth flows
+
+**Database:**
+- Users table with password hashing
+- Default admin user (username: `admin`, password: `admin123`)
+
+**API Endpoints:**
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login and receive JWT token
+- `GET /api/auth/me` - Get current user (protected)
+
+**Tests:**
+- User registration (success, validation, duplicates) ✓
+- User login (valid/invalid credentials) ✓
+- Protected routes (valid/invalid/expired tokens) ✓
+- JWT middleware (token generation, authentication, role checks) ✓
+- Password hashing with bcrypt ✓
+- **33 tests passing**
+
+**Bug Fixes:**
+- Fixed TokenExpiredError handling (must check before JsonWebTokenError)
+
+**Commits:**
+- `feat(auth): add authentication schemas and dependencies`
+- `feat(auth): implement JWT authentication with bcrypt`
+- `test: add comprehensive test suite with Jest`
+
+---
+
+## Upcoming Milestones
+
+### 🔄 Milestone 3: Authentication UI + Zustand
+**Status:** NEXT UP
+
+**Goals:**
+- Create login and registration forms in React
+- Implement Zustand store for auth state
+- Protected routes in React Router
+- Persistent login (token in localStorage)
+- Logout functionality
+- User profile display
+
+**Deliverables:**
+- Login page with form validation
+- Registration page
+- Auth state management with Zustand
+- Token storage and retrieval
+- Automatic token refresh (if time permits)
+- Protected route wrapper component
+
+---
+
+### Milestone 4: Basic Text Chat (Global)
+**Status:** PLANNED
+
+**Goals:**
+- Socket.IO integration for real-time communication
+- Global chat room
+- Message persistence in database
+- Real-time message broadcasting
+
+**Deliverables:**
+- Socket.IO server setup
+- Chat UI component
+- Message list with auto-scroll
+- Send message functionality
+- Real-time message updates
+
+---
+
+### Milestone 5: Room System
+**Status:** PLANNED
+
+**Goals:**
+- Create/delete/join rooms
+- Room-specific chat
+- Room list UI
+- User presence in rooms
+
+**Deliverables:**
+- Rooms table in database
+- Room management API endpoints
+- Room creation/deletion UI
+- Room switching functionality
+- User list per room
+
+---
+
+### Milestone 6: Direct Messages (DMs)
+**Status:** PLANNED
+
+**Goals:**
+- Private 1-on-1 messaging
+- DM list and unread indicators
+- Message persistence
+
+**Deliverables:**
+- DM table in database
+- DM API endpoints
+- DM UI component
+- Unread message count
+- Message history
+
+---
+
+### Milestone 7: Dice Roller
+**Status:** PLANNED
+
+**Goals:**
+- Dice roll syntax parser (e.g., "2d6+3", "1d20")
+- Roll visualization in chat
+- Roll history
+
+**Deliverables:**
+- Dice roll parser
+- Roll command in chat (/roll or dice syntax)
+- Roll result display with animation
+- Support for standard RPG dice (d4, d6, d8, d10, d12, d20, d100)
+
+---
+
+### Milestone 8: WebRTC Voice - Signaling
+**Status:** PLANNED
+
+**Goals:**
+- WebRTC signaling server with Socket.IO
+- Offer/Answer exchange
+- ICE candidate exchange
+- Connection state management
+
+**Deliverables:**
+- Signaling protocol implementation
+- Peer connection setup
+- STUN server configuration (Google's public STUN)
+- Connection state tracking
+
+---
+
+### Milestone 9: WebRTC Voice - P2P Mesh
+**Status:** PLANNED
+
+**Goals:**
+- P2P mesh topology for voice (max 6 users)
+- Audio stream capture and transmission
+- Audio playback from peers
+- Mute/unmute functionality
+
+**Deliverables:**
+- MediaStream capture (getUserMedia)
+- Peer-to-peer audio connections
+- Audio mixing and playback
+- Mute/unmute controls
+- Push-to-talk (PTT) option
+
+---
+
+### Milestone 10: Voice Activity Detection
+**Status:** PLANNED
+
+**Goals:**
+- Detect when users are speaking
+- Visual indicators for active speakers
+- Configurable sensitivity
+
+**Deliverables:**
+- Voice activity detection algorithm
+- Speaking indicator UI
+- Sensitivity settings
+- Noise gate implementation
+
+---
+
+### Milestone 11: Room Audio Isolation
+**Status:** PLANNED
+
+**Goals:**
+- Separate voice channels per room
+- Automatic voice channel switching
+- Prevent audio bleed between rooms
+
+**Deliverables:**
+- Room-based peer connection management
+- Voice channel switching logic
+- Proper connection cleanup on room change
+
+---
+
+### Milestone 12: YouTube Music Player
+**Status:** PLANNED
+
+**Goals:**
+- YouTube video/audio playback
+- Playlist management
+- DM controls (play/pause/skip/volume)
+- Synchronized playback for all users
+
+**Deliverables:**
+- YouTube API integration or iframe player
+- Playlist CRUD operations
+- Playback controls for DM
+- Audio synchronization across clients
+- Volume controls
+
+---
+
+### Milestone 13: Soundboard
+**Status:** PLANNED
+
+**Goals:**
+- Upload and store sound effects
+- Play sounds in voice channel
+- Sound categories and favorites
+- Hotkeys for quick access
+
+**Deliverables:**
+- Sound file upload
+- Sound storage (filesystem or database)
+- Soundboard UI
+- Sound playback in voice channel
+- Keyboard shortcuts
+
+---
+
+### Milestone 14: Role-Based Permissions
+**Status:** PLANNED
+
+**Goals:**
+- DM-only features (music control, soundboard, room management)
+- Player restrictions
+- Permission checks on UI and API
+
+**Deliverables:**
+- Permission middleware
+- UI elements hidden/disabled based on role
+- Permission-based feature access
+- Admin panel for DM
+
+---
+
+### Milestone 15: UI Polish & UX
+**Status:** PLANNED
+
+**Goals:**
+- Responsive design
+- Dark theme
+- Accessibility improvements
+- Animations and transitions
+- Error messages and loading states
+
+**Deliverables:**
+- Mobile-responsive layout
+- Dark mode theme
+- Loading spinners
+- Toast notifications
+- Keyboard shortcuts
+- ARIA labels
+
+---
+
+### Milestone 16: Deployment & Documentation
+**Status:** PLANNED
+
+**Goals:**
+- VPS deployment guide
+- Environment configuration
+- Database backups
+- Monitoring and logging
+- User documentation
+
+**Deliverables:**
+- Deployment scripts
+- Environment setup guide
+- nginx configuration (reverse proxy)
+- SSL/TLS setup with Let's Encrypt
+- Backup strategy
+- User manual
+- Troubleshooting guide
+
+---
+
+## Testing Progress
+
+**Current Test Coverage:**
+- ✅ Health endpoint (2 tests)
+- ✅ User registration (7 tests)
+- ✅ User login (6 tests)
+- ✅ Protected routes (5 tests)
+- ✅ JWT middleware (13 tests)
+
+**Total:** 33 tests passing
+
+**Testing Strategy:**
+- Integration tests first (real server, real database)
+- Use `fastify.inject()` for HTTP simulation
+- Separate test database files per test suite
+- No mocking of business logic or database layer
+- Tests must pass before committing
+
+---
+
+## Technology Decisions
+
+### Why SQLite?
+- Simple deployment (single file database)
+- No separate database server needed
+- Perfect for self-hosted with low concurrent users
+- Easy backups (just copy the file)
+
+### Why WebRTC P2P Mesh?
+- Low latency (direct peer connections)
+- No media server needed (reduces costs)
+- Scales well for small groups (max 6 users)
+- Each client sends/receives 5 streams (manageable)
+
+### Why Fastify?
+- Faster than Express
+- Built-in schema validation
+- Plugin architecture
+- Great TypeScript support
+
+### Why Zustand?
+- Simpler than Redux
+- Less boilerplate
+- Better TypeScript support
+- Small bundle size
+
+---
+
+## Current Status
+
+**Last Updated:** 2026-01-06
+**Completed Milestones:** 2/16
+**Progress:** 12.5%
+**Next Milestone:** Authentication UI + Zustand
+
+**Recent Activity:**
+- ✅ Set up comprehensive Jest testing infrastructure
+- ✅ Implemented JWT authentication with bcrypt
+- ✅ All 33 tests passing
+- ✅ Documented testing strategy in claude.md
