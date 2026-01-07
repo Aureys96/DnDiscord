@@ -228,13 +228,11 @@ function setupTestSocketIO(httpServer: HTTPServer): SocketIOServer {
       "voice_speaking",
       ({ roomId, isSpeaking }: { roomId: number; isSpeaking: boolean }) => {
         updateUserSpeakingState(roomId, user.id, isSpeaking);
-        socket
-          .to(`voice:${roomId}`)
-          .emit("voice_speaking_changed", {
-            roomId,
-            userId: user.id,
-            isSpeaking,
-          });
+        socket.to(`voice:${roomId}`).emit("voice_speaking_changed", {
+          roomId,
+          userId: user.id,
+          isSpeaking,
+        });
       },
     );
 

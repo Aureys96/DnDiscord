@@ -163,9 +163,7 @@ export interface RoomUser {
   role: string;
 }
 
-export function joinRoom(
-  roomId: number,
-): Promise<{
+export function joinRoom(roomId: number): Promise<{
   success: boolean;
   roomId?: number;
   users?: RoomUser[];
@@ -324,9 +322,7 @@ export interface VoiceSpeakingChangedEvent {
 
 // ==================== Voice Channel Functions ====================
 
-export function joinVoice(
-  roomId: number,
-): Promise<{
+export function joinVoice(roomId: number): Promise<{
   success: boolean;
   roomId?: number;
   voiceUsers?: VoiceUser[];
@@ -455,6 +451,263 @@ export function getVoiceUsers(
       (response: {
         success: boolean;
         voiceUsers?: VoiceUser[];
+        error?: string;
+      }) => {
+        resolve(response);
+      },
+    );
+  });
+}
+
+// ==================== Music Types ====================
+
+export type MusicScope = "global" | "room";
+
+export interface MusicTrack {
+  id: string;
+  youtubeUrl: string;
+  title: string;
+  duration: number;
+  thumbnailUrl?: string;
+  addedBy: number;
+  addedByUsername: string;
+}
+
+export interface MusicState {
+  currentTrack: MusicTrack | null;
+  queue: MusicTrack[];
+  isPlaying: boolean;
+  startedAt: number | null;
+  pausedAt: number | null;
+  volume: number;
+}
+
+export interface MusicStateChangedEvent {
+  scope: MusicScope;
+  roomId?: number;
+  state: MusicState;
+  audioUrl?: string;
+}
+
+export interface MusicQueueUpdatedEvent {
+  scope: MusicScope;
+  roomId?: number;
+  queue: MusicTrack[];
+}
+
+// ==================== Music Functions ====================
+
+export function musicPlay(
+  scope: MusicScope,
+  roomId?: number,
+): Promise<{ success: boolean; state?: MusicState; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: "Not connected to server" });
+      return;
+    }
+
+    socket.emit(
+      "music_play",
+      { scope, roomId },
+      (response: { success: boolean; state?: MusicState; error?: string }) => {
+        resolve(response);
+      },
+    );
+  });
+}
+
+export function musicPause(
+  scope: MusicScope,
+  roomId?: number,
+): Promise<{ success: boolean; state?: MusicState; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: "Not connected to server" });
+      return;
+    }
+
+    socket.emit(
+      "music_pause",
+      { scope, roomId },
+      (response: { success: boolean; state?: MusicState; error?: string }) => {
+        resolve(response);
+      },
+    );
+  });
+}
+
+export function musicSkip(
+  scope: MusicScope,
+  roomId?: number,
+): Promise<{ success: boolean; state?: MusicState; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: "Not connected to server" });
+      return;
+    }
+
+    socket.emit(
+      "music_skip",
+      { scope, roomId },
+      (response: { success: boolean; state?: MusicState; error?: string }) => {
+        resolve(response);
+      },
+    );
+  });
+}
+
+export function musicAdd(
+  youtubeUrl: string,
+  scope: MusicScope,
+  roomId?: number,
+): Promise<{
+  success: boolean;
+  track?: MusicTrack;
+  state?: MusicState;
+  error?: string;
+}> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: "Not connected to server" });
+      return;
+    }
+
+    socket.emit(
+      "music_add",
+      { youtubeUrl, scope, roomId },
+      (response: {
+        success: boolean;
+        track?: MusicTrack;
+        state?: MusicState;
+        error?: string;
+      }) => {
+        resolve(response);
+      },
+    );
+  });
+}
+
+export function musicRemove(
+  trackId: string,
+  scope: MusicScope,
+  roomId?: number,
+): Promise<{ success: boolean; state?: MusicState; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: "Not connected to server" });
+      return;
+    }
+
+    socket.emit(
+      "music_remove",
+      { trackId, scope, roomId },
+      (response: { success: boolean; state?: MusicState; error?: string }) => {
+        resolve(response);
+      },
+    );
+  });
+}
+
+export function musicSeek(
+  position: number,
+  scope: MusicScope,
+  roomId?: number,
+): Promise<{ success: boolean; state?: MusicState; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: "Not connected to server" });
+      return;
+    }
+
+    socket.emit(
+      "music_seek",
+      { position, scope, roomId },
+      (response: { success: boolean; state?: MusicState; error?: string }) => {
+        resolve(response);
+      },
+    );
+  });
+}
+
+export function musicSetVolume(
+  volume: number,
+  scope: MusicScope,
+  roomId?: number,
+): Promise<{ success: boolean; state?: MusicState; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: "Not connected to server" });
+      return;
+    }
+
+    socket.emit(
+      "music_volume",
+      { volume, scope, roomId },
+      (response: { success: boolean; state?: MusicState; error?: string }) => {
+        resolve(response);
+      },
+    );
+  });
+}
+
+export function musicGetState(roomId?: number): Promise<{
+  success: boolean;
+  scope?: MusicScope;
+  roomId?: number;
+  state?: MusicState;
+  audioUrl?: string;
+  error?: string;
+}> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: "Not connected to server" });
+      return;
+    }
+
+    socket.emit(
+      "music_get_state",
+      { roomId },
+      (response: {
+        success: boolean;
+        scope?: MusicScope;
+        roomId?: number;
+        state?: MusicState;
+        audioUrl?: string;
+        error?: string;
+      }) => {
+        resolve(response);
+      },
+    );
+  });
+}
+
+export function musicSync(
+  scope: MusicScope,
+  roomId?: number,
+): Promise<{
+  success: boolean;
+  isPlaying?: boolean;
+  startedAt?: number | null;
+  pausedAt?: number | null;
+  currentPosition?: number;
+  error?: string;
+}> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: "Not connected to server" });
+      return;
+    }
+
+    socket.emit(
+      "music_sync",
+      { scope, roomId },
+      (response: {
+        success: boolean;
+        isPlaying?: boolean;
+        startedAt?: number | null;
+        pausedAt?: number | null;
+        currentPosition?: number;
         error?: string;
       }) => {
         resolve(response);

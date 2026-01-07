@@ -136,3 +136,88 @@ export const GetDMMessagesQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(50),
 });
 export type GetDMMessagesQuery = z.infer<typeof GetDMMessagesQuerySchema>;
+
+// Music types
+export const MusicScopeSchema = z.enum(["global", "room"]);
+export type MusicScope = z.infer<typeof MusicScopeSchema>;
+
+export const MusicTrackSchema = z.object({
+  id: z.string(),
+  youtubeUrl: z.string().url(),
+  title: z.string(),
+  duration: z.number().int().nonnegative(), // seconds
+  thumbnailUrl: z.string().url().optional(),
+  addedBy: z.number().int(),
+  addedByUsername: z.string(),
+});
+export type MusicTrack = z.infer<typeof MusicTrackSchema>;
+
+export const MusicStateSchema = z.object({
+  currentTrack: MusicTrackSchema.nullable(),
+  queue: z.array(MusicTrackSchema),
+  isPlaying: z.boolean(),
+  startedAt: z.number().nullable(), // Unix timestamp when playback started
+  pausedAt: z.number().nullable(), // Position in seconds when paused
+  volume: z.number().int().min(0).max(100),
+});
+export type MusicState = z.infer<typeof MusicStateSchema>;
+
+// Music socket event payloads
+export const MusicPlayPayloadSchema = z.object({
+  scope: MusicScopeSchema,
+  roomId: z.number().int().optional(),
+});
+export type MusicPlayPayload = z.infer<typeof MusicPlayPayloadSchema>;
+
+export const MusicAddPayloadSchema = z.object({
+  youtubeUrl: z.string().url(),
+  scope: MusicScopeSchema,
+  roomId: z.number().int().optional(),
+});
+export type MusicAddPayload = z.infer<typeof MusicAddPayloadSchema>;
+
+export const MusicRemovePayloadSchema = z.object({
+  trackId: z.string(),
+  scope: MusicScopeSchema,
+  roomId: z.number().int().optional(),
+});
+export type MusicRemovePayload = z.infer<typeof MusicRemovePayloadSchema>;
+
+export const MusicSeekPayloadSchema = z.object({
+  position: z.number().nonnegative(), // seconds
+  scope: MusicScopeSchema,
+  roomId: z.number().int().optional(),
+});
+export type MusicSeekPayload = z.infer<typeof MusicSeekPayloadSchema>;
+
+export const MusicVolumePayloadSchema = z.object({
+  volume: z.number().int().min(0).max(100),
+  scope: MusicScopeSchema,
+  roomId: z.number().int().optional(),
+});
+export type MusicVolumePayload = z.infer<typeof MusicVolumePayloadSchema>;
+
+export const MusicGetStatePayloadSchema = z.object({
+  roomId: z.number().int().optional(),
+});
+export type MusicGetStatePayload = z.infer<typeof MusicGetStatePayloadSchema>;
+
+// Music broadcast event types
+export interface MusicStateChangedEvent {
+  scope: MusicScope;
+  roomId?: number;
+  state: MusicState;
+  audioUrl?: string; // Direct audio URL for playback
+}
+
+export interface MusicQueueUpdatedEvent {
+  scope: MusicScope;
+  roomId?: number;
+  queue: MusicTrack[];
+}
+
+export interface MusicTrackEndedEvent {
+  scope: MusicScope;
+  roomId?: number;
+  nextTrack: MusicTrack | null;
+}

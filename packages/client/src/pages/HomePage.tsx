@@ -6,10 +6,12 @@ import { useChatStore } from "../stores/chatStore";
 import { useRoomStore } from "../stores/roomStore";
 import { useDMStore } from "../stores/dmStore";
 import { useVoiceStore } from "../stores/voiceStore";
+import { useMusicStore } from "../stores/musicStore";
 import { ChatContainer } from "../components/features/chat";
 import { RoomList } from "../components/features/rooms";
 import { ConversationList, DMChat } from "../components/features/dms";
 import { VoiceParticipants } from "../components/features/voice";
+import { MusicPlayer } from "../components/features/music";
 import type { Conversation } from "@dnd-voice/shared";
 
 type ActiveTab = "rooms" | "dms";
@@ -26,6 +28,7 @@ export function HomePage() {
     clearMessages,
   } = useDMStore();
   const { isInVoice } = useVoiceStore();
+  const { currentTrack, queue } = useMusicStore();
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("rooms");
   const [viewMode, setViewMode] = useState<ViewMode>("rooms");
@@ -34,6 +37,7 @@ export function HomePage() {
   if (!user) return null;
 
   const isDM = user.role === "dm";
+  const hasMusicPlayer = isDM || currentTrack !== null || queue.length > 0;
 
   const handleRoomSelect = async (roomId: number | null) => {
     // Clear any active DM conversation when switching to rooms
@@ -186,6 +190,12 @@ export function HomePage() {
           )}
         </main>
       </div>
+
+      {/* Music Player - fixed bottom bar */}
+      {hasMusicPlayer && <MusicPlayer currentRoomId={currentRoomId} />}
+
+      {/* Spacer for music player */}
+      {hasMusicPlayer && <div className="h-20 flex-shrink-0" />}
     </div>
   );
 }
