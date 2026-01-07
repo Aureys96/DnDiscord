@@ -5,11 +5,8 @@ import { authRoutes } from './auth.js';
 import { roomRoutes } from './rooms.js';
 import { initializeDatabase, getDatabase } from '../db/index.js';
 import { unlinkSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 describe('Room Routes', () => {
   let fastify: FastifyInstance;
@@ -17,7 +14,7 @@ describe('Room Routes', () => {
   let playerToken: string;
   let dmUserId: number;
   let playerUserId: number;
-  const testDbPath = join(__dirname, '../../test-rooms.db');
+  const testDbPath = join(tmpdir(), 'test-rooms.db');
 
   beforeAll(async () => {
     // Clean up any existing test database

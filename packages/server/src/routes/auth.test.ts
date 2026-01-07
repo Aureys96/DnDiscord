@@ -4,15 +4,12 @@ import cors from '@fastify/cors';
 import { authRoutes } from './auth.js';
 import { initializeDatabase, getDatabase } from '../db/index.js';
 import { unlinkSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 describe('Auth Routes', () => {
   let fastify: FastifyInstance;
-  const testDbPath = join(__dirname, '../../test-auth.db');
+  const testDbPath = join(tmpdir(), 'test-auth.db');
 
   beforeAll(async () => {
     // Clean up any existing test database

@@ -4,15 +4,12 @@ import { authenticate, generateToken, requireDM } from './auth.js';
 import jwt from 'jsonwebtoken';
 import { initializeDatabase } from '../db/index.js';
 import { unlinkSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 describe('Auth Middleware', () => {
   let fastify: FastifyInstance;
-  const testDbPath = join(__dirname, '../../test-middleware.db');
+  const testDbPath = join(tmpdir(), 'test-middleware.db');
 
   beforeAll(async () => {
     // Clean up any existing test database

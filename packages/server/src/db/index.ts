@@ -1,20 +1,49 @@
 import Database, { type Database as DatabaseType, type Statement } from 'better-sqlite3';
 import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { join } from 'path';
 import bcrypt from 'bcrypt';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 let db: DatabaseType;
 
+// Get the directory containing this file at runtime
+function getSchemaPath(): string {
+  // Check if SCHEMA_PATH is explicitly set
+  if (process.env.SCHEMA_PATH) {
+    return process.env.SCHEMA_PATH;
+  }
+  // Try multiple locations to support both running from project root and server package
+  const possiblePaths = [
+    join(process.cwd(), 'packages/server/src/db/schema.sql'), // From project root
+    join(process.cwd(), 'src/db/schema.sql'), // From packages/server
+  ];
+
+  for (const schemaPath of possiblePaths) {
+    try {
+      readFileSync(schemaPath); // Check if file exists
+      return schemaPath;
+    } catch {
+      continue;
+    }
+  }
+
+  // Fallback to project root path (will error if not found)
+  return possiblePaths[0];
+}
+
+function getDefaultDbPath(): string {
+  // Try multiple locations
+  const cwd = process.cwd();
+  if (cwd.endsWith('packages/server')) {
+    return join(cwd, '../../data/dnd.db');
+  }
+  return join(cwd, 'data/dnd.db');
+}
+
 export function getDatabase(): DatabaseType {
   if (!db) {
-    const dbPath = process.env.DATABASE_PATH || join(__dirname, '../../../data/dnd.db');
-    const dbFullPath = dbPath.startsWith('/') ? dbPath : join(__dirname, dbPath);
+    const dbPath = process.env.DATABASE_PATH || getDefaultDbPath();
 
-    db = new Database(dbFullPath);
+    db = new Database(dbPath);
 
     // Enable foreign keys
     db.pragma('foreign_keys = ON');
@@ -26,7 +55,7 @@ export function getDatabase(): DatabaseType {
 // Initialize database schema
 export function initializeDatabase() {
   const database = getDatabase();
-  const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf-8');
+  const schema = readFileSync(getSchemaPath(), 'utf-8');
   database.exec(schema);
 
   // Seed default DM user if not exists

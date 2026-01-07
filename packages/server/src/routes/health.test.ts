@@ -4,15 +4,12 @@ import cors from '@fastify/cors';
 import { healthRoutes } from './health.js';
 import { initializeDatabase } from '../db/index.js';
 import { unlinkSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 describe('Health Routes', () => {
   let fastify: FastifyInstance;
-  const testDbPath = join(__dirname, '../../test.db');
+  const testDbPath = join(tmpdir(), 'test-health.db');
 
   beforeAll(async () => {
     // Clean up any existing test database

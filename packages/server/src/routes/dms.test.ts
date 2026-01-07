@@ -5,11 +5,8 @@ import { authRoutes } from './auth.js';
 import { dmRoutes } from './dms.js';
 import { initializeDatabase, getDatabase } from '../db/index.js';
 import { unlinkSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 describe('DM Routes', () => {
   let fastify: FastifyInstance;
@@ -19,7 +16,7 @@ describe('DM Routes', () => {
   let user2Id: number;
   let user3Token: string;
   let user3Id: number;
-  const testDbPath = join(__dirname, '../../test-dms.db');
+  const testDbPath = join(tmpdir(), 'test-dms.db');
 
   beforeAll(async () => {
     // Clean up any existing test database
