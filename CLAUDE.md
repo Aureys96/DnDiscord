@@ -46,6 +46,27 @@ cd packages/server && npm run test && cd ../.. && npm run lint && npm run format
 - **Do not ask for approval on each commit** - just commit when work is done
 - **Only ask for approval before the final push to remote** (or push without asking if user already requested it)
 
+## Architecture Documentation
+
+**IMPORTANT:** Before starting any implementation task, READ `docs/ARCHITECTURE.md` to understand:
+
+- Project structure and file locations
+- Database schema and relationships
+- REST API endpoints and Socket.IO events
+- Client stores and component organization
+- Common patterns and conventions
+
+**After completing significant features:**
+
+1. Update `docs/ARCHITECTURE.md` with any new:
+   - Database tables or schema changes
+   - API endpoints or socket events
+   - Stores, components, or managers
+   - Key technical decisions
+2. Keep the "Last updated" note at the bottom current
+
+This documentation ensures future agents can work efficiently without re-exploring the entire codebase.
+
 ## Project Structure
 
 - This is a TypeScript monorepo using npm workspaces
