@@ -78,3 +78,44 @@ export const AuthResponseSchema = z.object({
   user: UserSchema,
 });
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
+
+// Conversation types (for DMs)
+export const ConversationSchema = z.object({
+  id: z.number(),
+  user1Id: z.number(),
+  user2Id: z.number(),
+  lastMessageAt: z.string(),
+  createdAt: z.string().optional(),
+  // Populated fields
+  otherUserId: z.number().optional(),
+  otherUsername: z.string().optional(),
+  otherRole: UserRoleSchema.optional(),
+  lastMessage: z.string().nullable().optional(),
+  unreadCount: z.number().optional(),
+});
+export type Conversation = z.infer<typeof ConversationSchema>;
+
+// DM message schema (extends Message with required recipient)
+export const DMMessageSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  content: z.string(),
+  timestamp: z.string(),
+  type: z.literal('dm'),
+  recipientId: z.number(),
+  username: z.string().optional(),
+  userRole: UserRoleSchema.optional(),
+});
+export type DMMessage = z.infer<typeof DMMessageSchema>;
+
+// Request schemas for DM API
+export const SendDMRequestSchema = z.object({
+  recipientId: z.number().int().positive('Recipient ID is required'),
+  content: z.string().min(1, 'Message content is required').max(2000, 'Message must be at most 2000 characters'),
+});
+export type SendDMRequest = z.infer<typeof SendDMRequestSchema>;
+
+export const GetDMMessagesQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(100).default(50),
+});
+export type GetDMMessagesQuery = z.infer<typeof GetDMMessagesQuerySchema>;

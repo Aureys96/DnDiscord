@@ -1,7 +1,7 @@
 import { Server as HTTPServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
-import { getMessageQueries } from '../db/index.js';
+import { getMessageQueries, getDMQueries, getConversationQueries, getUserQueries } from '../db/index.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-please-change-in-production';
 
@@ -23,6 +23,22 @@ interface SendMessagePayload {
   content: string;
   type?: 'global' | 'room';
   roomId?: number;
+}
+
+interface SendDMPayload {
+  recipientId: number;
+  content: string;
+}
+
+interface DMMessageResponse {
+  id: number;
+  userId: number;
+  recipientId: number;
+  content: string;
+  timestamp: string;
+  type: 'dm';
+  username: string;
+  userRole: string;
 }
 
 interface MessageResponse {
@@ -353,6 +369,98 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
       } catch (error) {
         console.error('Error getting room users:', error);
         callback?.({ error: 'Failed to get room users' });
+      }
+    });
+
+    // Handle send DM
+    authSocket.on('send_dm', (payload: SendDMPayload, callback) => {
+      try {
+        const { recipientId, content } = payload;
+
+        if (!recipientId || typeof recipientId !== 'number') {
+          return callback?.({ error: 'Invalid recipient ID' });
+        }
+
+        if (recipientId === user.id) {
+          return callback?.({ error: 'Cannot send DM to yourself' });
+        }
+
+        if (!content || content.trim() === '') {
+          return callback?.({ error: 'Message content is required' });
+        }
+
+        if (content.length > 2000) {
+          return callback?.({ error: 'Message too long (max 2000 characters)' });
+        }
+
+        // Check if recipient exists
+        const userQueries = getUserQueries();
+        const recipient = userQueries.getById.get(recipientId) as { id: number; username: string; role: string } | undefined;
+
+        if (!recipient) {
+          return callback?.({ error: 'User not found' });
+        }
+
+        // Create/update conversation
+        const conversationQueries = getConversationQueries();
+        const conversation = conversationQueries.getOrCreate(user.id, recipientId);
+
+        // Create DM message
+        const dmQueries = getDMQueries();
+        const result = dmQueries.create.run(user.id, content.trim(), recipientId);
+
+        // Update conversation timestamp
+        conversationQueries.updateLastMessage.run(conversation.id);
+
+        // Mark as read for sender
+        dmQueries.markRead.run(conversation.id, user.id);
+
+        const dmMessage: DMMessageResponse = {
+          id: result.lastInsertRowid as number,
+          userId: user.id,
+          recipientId,
+          content: content.trim(),
+          timestamp: new Date().toISOString(),
+          type: 'dm',
+          username: user.username,
+          userRole: user.role,
+        };
+
+        // Send to recipient if online
+        const recipientSocket = connectedUsers.get(recipientId);
+        if (recipientSocket) {
+          recipientSocket.emit('new_dm', dmMessage);
+        }
+
+        // Also send back to sender for confirmation
+        authSocket.emit('new_dm', dmMessage);
+
+        callback?.({ success: true, message: dmMessage });
+      } catch (error) {
+        console.error('Error sending DM:', error);
+        callback?.({ error: 'Failed to send DM' });
+      }
+    });
+
+    // Handle DM typing indicator
+    authSocket.on('dm_typing_start', (payload: { recipientId: number }) => {
+      const { recipientId } = payload;
+      const recipientSocket = connectedUsers.get(recipientId);
+      if (recipientSocket) {
+        recipientSocket.emit('dm_user_typing', {
+          userId: user.id,
+          username: user.username,
+        });
+      }
+    });
+
+    authSocket.on('dm_typing_stop', (payload: { recipientId: number }) => {
+      const { recipientId } = payload;
+      const recipientSocket = connectedUsers.get(recipientId);
+      if (recipientSocket) {
+        recipientSocket.emit('dm_user_stopped_typing', {
+          userId: user.id,
+        });
       }
     });
 

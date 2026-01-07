@@ -276,27 +276,56 @@ packages/client/src/
 
 ---
 
-## Upcoming Milestones
+### ✅ Milestone 6: Direct Messages (DMs)
+**Status:** COMPLETED
+**Completed:** 2026-01-07
 
-### 🔄 Milestone 6: Direct Messages (DMs)
-**Status:** NEXT UP
+**Implemented:**
+- Private 1-on-1 messaging between users
+- Conversations table for tracking DM threads
+- Real-time message delivery via Socket.IO
+- Unread message indicators with counts
+- Conversation list with last message preview
+- User list for starting new conversations
+- Mark as read functionality
 
-**Goals:**
-- Private 1-on-1 messaging
-- DM list and unread indicators
-- Message persistence
+**Backend:**
+- Conversations table with user pairs
+- conversation_reads table for read status tracking
+- DM message queries (create, get conversation messages)
+- REST API endpoints for conversations and messages
+- Socket.IO events: `send_dm`, `new_dm`, `dm_typing_start/stop`
 
-**Deliverables:**
-- DM table in database
-- DM API endpoints
-- DM UI component
-- Unread message count
-- Message history
+**Frontend Components:**
+- `ConversationList` - Shows DM conversations with unread badges
+- `DMChat` - Chat interface with typing indicators
+- `dmStore` - Zustand store for DM state management
+- Tab-based sidebar (Channels / DMs)
+- New DM modal for starting conversations
+
+**API Endpoints:**
+- `GET /api/users` - List all users (for new DMs)
+- `GET /api/dms/conversations` - List user's conversations
+- `POST /api/dms/conversations/:userId` - Start/get conversation
+- `GET /api/dms/:userId/messages` - Get DM messages
+- `POST /api/dms/:userId/messages` - Send DM
+- `POST /api/dms/:userId/read` - Mark conversation as read
+- `GET /api/dms/unread-count` - Get total unread count
+
+**Tests:**
+- 19 new integration tests for DM functionality
+- Tests for conversation CRUD, messaging, validation
+- **70 total tests passing**
+
+**Commits:**
+- `feat(dms): add direct messaging with real-time delivery`
 
 ---
 
+## Upcoming Milestones
+
 ### Milestone 7: Dice Roller
-**Status:** PLANNED
+**Status:** NEXT UP
 
 **Goals:**
 - Dice roll syntax parser (e.g., "2d6+3", "1d20")
@@ -479,8 +508,9 @@ packages/client/src/
 - ✅ Protected routes (5 tests)
 - ✅ JWT middleware (13 tests)
 - ✅ Room CRUD operations (18 tests)
+- ✅ DM functionality (19 tests)
 
-**Total:** 51 tests passing
+**Total:** 70 tests passing
 
 **Testing Strategy:**
 - Integration tests first (real server, real database)
@@ -522,14 +552,15 @@ packages/client/src/
 ## Current Status
 
 **Last Updated:** 2026-01-07
-**Completed Milestones:** 5/16
-**Progress:** 31.25%
-**Next Milestone:** Direct Messages (DMs)
+**Completed Milestones:** 6/16
+**Progress:** 37.5%
+**Next Milestone:** Dice Roller
 
 **Recent Activity:**
-- ✅ Implemented room CRUD with REST API endpoints
-- ✅ Added Socket.IO room events (join, leave, presence)
-- ✅ Built RoomList sidebar component
-- ✅ Added room-aware chat with isolated messages
-- ✅ Implemented user presence tracking per room
-- ✅ Updated HomePage with Discord-inspired sidebar layout
+- ✅ Added conversations and conversation_reads tables for DMs
+- ✅ Implemented DM REST API endpoints (CRUD, send, read)
+- ✅ Added Socket.IO events for real-time DM delivery
+- ✅ Built ConversationList and DMChat UI components
+- ✅ Added unread message indicators with badge counts
+- ✅ Implemented tab-based sidebar (Channels / DMs)
+- ✅ Added 19 integration tests for DM functionality

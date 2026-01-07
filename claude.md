@@ -161,9 +161,9 @@ src/components/
 
 **General Rules:**
 - **All milestones must have automated tests before committing**
+- **After each milestone is complete, write integration tests for the new functionality** - do this proactively without waiting to be asked
 - Write tests that are adequate and can be relatively easily implemented
 - Tests must pass before pushing code to remote
-- Add new tests for new functionality after each milestone (when reasonable)
 - Backend tests: Use Jest for API endpoints, middleware, and business logic
 - Frontend tests: Use Vitest (Vite's test runner) for components and hooks when UI complexity grows
 

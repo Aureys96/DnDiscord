@@ -171,3 +171,45 @@ export function getRoomUsers(
     });
   });
 }
+
+// DM-related interfaces
+export interface DMMessage {
+  id: number;
+  userId: number;
+  recipientId: number;
+  content: string;
+  timestamp: string;
+  type: 'dm';
+  username: string;
+  userRole: string;
+}
+
+export interface DMTypingEvent {
+  userId: number;
+  username: string;
+}
+
+// DM-related functions
+export function sendDM(
+  recipientId: number,
+  content: string
+): Promise<{ success: boolean; message?: DMMessage; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected to server' });
+      return;
+    }
+
+    socket.emit('send_dm', { recipientId, content }, (response: { success: boolean; message?: DMMessage; error?: string }) => {
+      resolve(response);
+    });
+  });
+}
+
+export function emitDMTypingStart(recipientId: number): void {
+  socket?.emit('dm_typing_start', { recipientId });
+}
+
+export function emitDMTypingStop(recipientId: number): void {
+  socket?.emit('dm_typing_stop', { recipientId });
+}
