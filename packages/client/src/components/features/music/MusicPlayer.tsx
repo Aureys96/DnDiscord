@@ -75,7 +75,7 @@ export function MusicPlayer({ currentRoomId }: MusicPlayerProps) {
     setScope("global", currentRoomId ?? undefined);
   }, [currentRoomId, setScope]);
 
-  // Update music manager when state changes
+  // Update music manager when playback state changes (not volume)
   useEffect(() => {
     // Only update if audioUrl changed or playback state changed
     if (audioUrl !== prevAudioUrlRef.current || audioUrl) {
@@ -88,7 +88,12 @@ export function MusicPlayer({ currentRoomId }: MusicPlayerProps) {
         volume,
       );
     }
-  }, [audioUrl, isPlaying, startedAt, pausedAt, volume]);
+  }, [audioUrl, isPlaying, startedAt, pausedAt]); // volume removed from deps
+
+  // Handle volume changes separately to avoid reloading audio
+  useEffect(() => {
+    musicManager.setVolume(volume);
+  }, [volume]);
 
   // Format time in MM:SS
   const formatTime = useCallback((seconds: number): string => {
