@@ -248,15 +248,19 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
           event.roomId === currentRoomId);
 
       if (matchesScope) {
-        set({
+        // Only update audioUrl if explicitly provided (volume changes don't include it)
+        const updates: Partial<MusicStoreState> = {
           currentTrack: event.state.currentTrack,
           queue: event.state.queue,
           isPlaying: event.state.isPlaying,
           volume: event.state.volume,
           startedAt: event.state.startedAt,
           pausedAt: event.state.pausedAt,
-          audioUrl: event.audioUrl ?? null,
-        });
+        };
+        if (event.audioUrl !== undefined) {
+          updates.audioUrl = event.audioUrl;
+        }
+        set(updates);
       }
     };
 
