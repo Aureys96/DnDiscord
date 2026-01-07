@@ -1,8 +1,18 @@
-import { Server as HTTPServer } from 'http';
-import { Server, Socket } from 'socket.io';
-import jwt from 'jsonwebtoken';
-import { getMessageQueries, getDMQueries, getConversationQueries, getUserQueries } from '../db/index.js';
-import { extractDiceCommand, parseAndRoll, formatRollResult, type DiceRollResult } from '@dnd-voice/shared';
+import { Server as HTTPServer } from "http";
+import { Server, Socket } from "socket.io";
+import jwt from "jsonwebtoken";
+import {
+  getMessageQueries,
+  getDMQueries,
+  getConversationQueries,
+  getUserQueries,
+} from "../db/index.js";
+import {
+  extractDiceCommand,
+  parseAndRoll,
+  formatRollResult,
+  type DiceRollResult,
+} from "@dnd-voice/shared";
 import {
   getVoiceUsers,
   addUserToVoice,
@@ -12,28 +22,28 @@ import {
   updateUserSpeakingState,
   isUserInVoice,
   getUserVoiceRoom,
-  type VoiceUser,
-} from './voiceChannels.js';
+} from "./voiceChannels.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-please-change-in-production';
+const JWT_SECRET =
+  process.env.JWT_SECRET || "dev-secret-key-please-change-in-production";
 
 interface JWTPayload {
   userId: number;
   username: string;
-  role: 'dm' | 'player';
+  role: "dm" | "player";
 }
 
 interface AuthenticatedSocket extends Socket {
   user: {
     id: number;
     username: string;
-    role: 'dm' | 'player';
+    role: "dm" | "player";
   };
 }
 
 interface SendMessagePayload {
   content: string;
-  type?: 'global' | 'room';
+  type?: "global" | "room";
   roomId?: number;
 }
 
@@ -48,7 +58,7 @@ interface DMMessageResponse {
   recipientId: number;
   content: string;
   timestamp: string;
-  type: 'dm';
+  type: "dm";
   username: string;
   userRole: string;
 }
@@ -116,7 +126,9 @@ const userCurrentRoom = new Map<number, number | null>();
 // Track users in each room for presence
 const roomUsers = new Map<number, Set<number>>();
 
-function getRoomUserList(roomId: number): Array<{ userId: number; username: string; role: string }> {
+function getRoomUserList(
+  roomId: number,
+): Array<{ userId: number; username: string; role: string }> {
   const userIds = roomUsers.get(roomId) || new Set();
   const users: Array<{ userId: number; username: string; role: string }> = [];
 
@@ -137,7 +149,7 @@ function getRoomUserList(roomId: number): Array<{ userId: number; username: stri
 export function setupSocketIO(httpServer: HTTPServer): Server {
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+      origin: process.env.CORS_ORIGIN || "http://localhost:5173",
       credentials: true,
     },
   });
@@ -147,7 +159,7 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
     const token = socket.handshake.auth.token;
 
     if (!token) {
-      return next(new Error('Authentication required'));
+      return next(new Error("Authentication required"));
     }
 
     try {
@@ -160,13 +172,13 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
       next();
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
-        return next(new Error('Token expired'));
+        return next(new Error("Token expired"));
       }
-      return next(new Error('Invalid token'));
+      return next(new Error("Invalid token"));
     }
   });
 
-  io.on('connection', (socket: Socket) => {
+  io.on("connection", (socket: Socket) => {
     const authSocket = socket as AuthenticatedSocket;
     const { user } = authSocket;
 
@@ -176,26 +188,28 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
     connectedUsers.set(user.id, authSocket);
 
     // Join global room
-    authSocket.join('global');
+    authSocket.join("global");
 
     // Broadcast user joined
-    io.to('global').emit('user_joined', {
+    io.to("global").emit("user_joined", {
       userId: user.id,
       username: user.username,
       role: user.role,
     });
 
     // Handle send message
-    authSocket.on('send_message', (payload: SendMessagePayload, callback) => {
+    authSocket.on("send_message", (payload: SendMessagePayload, callback) => {
       try {
-        const { content, type = 'global', roomId } = payload;
+        const { content, type = "global", roomId } = payload;
 
-        if (!content || content.trim() === '') {
-          return callback?.({ error: 'Message content is required' });
+        if (!content || content.trim() === "") {
+          return callback?.({ error: "Message content is required" });
         }
 
         if (content.length > 2000) {
-          return callback?.({ error: 'Message too long (max 2000 characters)' });
+          return callback?.({
+            error: "Message too long (max 2000 characters)",
+          });
         }
 
         // Check for dice roll command
@@ -209,7 +223,7 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
           if (rollResult) {
             // Format the roll result as human-readable content
             messageContent = formatRollResult(rollResult);
-            messageType = 'roll';
+            messageType = "roll";
           }
         }
 
@@ -217,12 +231,12 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
 
         // Insert message into database
         const result = queries.create.run(
-          type === 'room' ? roomId : null, // Use original type for room context
+          type === "room" ? roomId : null, // Use original type for room context
           user.id,
           messageContent,
           messageType,
           null, // recipient_id (for DMs)
-          rollResult ? JSON.stringify(rollResult) : null // roll_result
+          rollResult ? JSON.stringify(rollResult) : null, // roll_result
         );
 
         // Get the created message with user info
@@ -247,98 +261,111 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
           type: message.type,
           username: message.username,
           userRole: message.user_role,
-          rollResult: message.roll_result ? JSON.parse(message.roll_result) : undefined,
+          rollResult: message.roll_result
+            ? JSON.parse(message.roll_result)
+            : undefined,
         };
 
         // Broadcast to appropriate room
-        if (type === 'global') {
-          io.to('global').emit('new_message', messageResponse);
-        } else if (type === 'room' && roomId) {
-          io.to(`room:${roomId}`).emit('new_message', messageResponse);
+        if (type === "global") {
+          io.to("global").emit("new_message", messageResponse);
+        } else if (type === "room" && roomId) {
+          io.to(`room:${roomId}`).emit("new_message", messageResponse);
         }
 
         callback?.({ success: true, message: messageResponse });
       } catch (error) {
-        console.error('Error sending message:', error);
-        callback?.({ error: 'Failed to send message' });
+        console.error("Error sending message:", error);
+        callback?.({ error: "Failed to send message" });
       }
     });
 
     // Handle get message history
-    authSocket.on('get_messages', (payload: { type?: 'global' | 'room'; roomId?: number; limit?: number }, callback) => {
-      try {
-        const { type = 'global', roomId, limit = 50 } = payload;
-        const queries = getMessageQueries();
+    authSocket.on(
+      "get_messages",
+      (
+        payload: { type?: "global" | "room"; roomId?: number; limit?: number },
+        callback,
+      ) => {
+        try {
+          const { type = "global", roomId, limit = 50 } = payload;
+          const queries = getMessageQueries();
 
-        let messages: Array<{
-          id: number;
-          room_id: number | null;
-          user_id: number;
-          content: string;
-          timestamp: string;
-          type: string;
-          username: string;
-          user_role: string;
-          roll_result: string | null;
-        }>;
+          let messages: Array<{
+            id: number;
+            room_id: number | null;
+            user_id: number;
+            content: string;
+            timestamp: string;
+            type: string;
+            username: string;
+            user_role: string;
+            roll_result: string | null;
+          }>;
 
-        if (type === 'global') {
-          messages = queries.getGlobalMessages.all(Math.min(limit, 100)) as typeof messages;
-        } else if (type === 'room' && roomId) {
-          messages = queries.getRoomMessages.all(roomId, Math.min(limit, 100)) as typeof messages;
-        } else {
-          return callback?.({ error: 'Invalid request' });
+          if (type === "global") {
+            messages = queries.getGlobalMessages.all(
+              Math.min(limit, 100),
+            ) as typeof messages;
+          } else if (type === "room" && roomId) {
+            messages = queries.getRoomMessages.all(
+              roomId,
+              Math.min(limit, 100),
+            ) as typeof messages;
+          } else {
+            return callback?.({ error: "Invalid request" });
+          }
+
+          // Transform and reverse to get chronological order (oldest first)
+          const transformedMessages: MessageResponse[] = messages
+            .map((m) => ({
+              id: m.id,
+              roomId: m.room_id,
+              userId: m.user_id,
+              content: m.content,
+              timestamp: m.timestamp,
+              type: m.type,
+              username: m.username,
+              userRole: m.user_role,
+              rollResult: m.roll_result ? JSON.parse(m.roll_result) : undefined,
+            }))
+            .reverse();
+
+          callback?.({ success: true, messages: transformedMessages });
+        } catch (error) {
+          console.error("Error getting messages:", error);
+          callback?.({ error: "Failed to get messages" });
         }
-
-        // Transform and reverse to get chronological order (oldest first)
-        const transformedMessages: MessageResponse[] = messages
-          .map((m) => ({
-            id: m.id,
-            roomId: m.room_id,
-            userId: m.user_id,
-            content: m.content,
-            timestamp: m.timestamp,
-            type: m.type,
-            username: m.username,
-            userRole: m.user_role,
-            rollResult: m.roll_result ? JSON.parse(m.roll_result) : undefined,
-          }))
-          .reverse();
-
-        callback?.({ success: true, messages: transformedMessages });
-      } catch (error) {
-        console.error('Error getting messages:', error);
-        callback?.({ error: 'Failed to get messages' });
-      }
-    });
+      },
+    );
 
     // Handle typing indicator
-    authSocket.on('typing_start', (payload?: { roomId?: number }) => {
+    authSocket.on("typing_start", (payload?: { roomId?: number }) => {
       const roomId = payload?.roomId;
-      const targetRoom = roomId ? `room:${roomId}` : 'global';
-      authSocket.to(targetRoom).emit('user_typing', {
+      const targetRoom = roomId ? `room:${roomId}` : "global";
+      authSocket.to(targetRoom).emit("user_typing", {
         userId: user.id,
         username: user.username,
         roomId: roomId || null,
       });
     });
 
-    authSocket.on('typing_stop', (payload?: { roomId?: number }) => {
+    authSocket.on("typing_stop", (payload?: { roomId?: number }) => {
       const roomId = payload?.roomId;
-      const targetRoom = roomId ? `room:${roomId}` : 'global';
-      authSocket.to(targetRoom).emit('user_stopped_typing', {
+      const targetRoom = roomId ? `room:${roomId}` : "global";
+      authSocket.to(targetRoom).emit("user_stopped_typing", {
         userId: user.id,
         roomId: roomId || null,
       });
     });
 
     // Handle join room
-    authSocket.on('join_room', (payload: { roomId: number }, callback) => {
+    authSocket.on("join_room", (payload: { roomId: number }, callback) => {
       try {
         const { roomId } = payload;
 
-        if (!roomId || typeof roomId !== 'number') {
-          return callback?.({ error: 'Invalid room ID' });
+        if (!roomId || typeof roomId !== "number") {
+          return callback?.({ error: "Invalid room ID" });
         }
 
         // Leave current room if in one
@@ -350,12 +377,14 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
             const removed = removeUserFromVoice(currentRoomId, user.id);
             if (removed) {
               // Notify others in old room that user left voice
-              io.to(`room:${currentRoomId}`).emit('voice_user_left', {
+              io.to(`room:${currentRoomId}`).emit("voice_user_left", {
                 roomId: currentRoomId,
                 userId: user.id,
                 username: user.username,
               });
-              console.log(`✗ ${user.username} auto-left voice in room ${currentRoomId} (switched rooms)`);
+              console.log(
+                `✗ ${user.username} auto-left voice in room ${currentRoomId} (switched rooms)`,
+              );
             }
           }
 
@@ -371,7 +400,7 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
           }
 
           // Notify others in the old room
-          io.to(`room:${currentRoomId}`).emit('user_left_room', {
+          io.to(`room:${currentRoomId}`).emit("user_left_room", {
             userId: user.id,
             username: user.username,
             roomId: currentRoomId,
@@ -389,7 +418,7 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
         roomUsers.get(roomId)!.add(user.id);
 
         // Notify others in the new room
-        io.to(`room:${roomId}`).emit('user_joined_room', {
+        io.to(`room:${roomId}`).emit("user_joined_room", {
           userId: user.id,
           username: user.username,
           role: user.role,
@@ -403,13 +432,13 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
           users: getRoomUserList(roomId),
         });
       } catch (error) {
-        console.error('Error joining room:', error);
-        callback?.({ error: 'Failed to join room' });
+        console.error("Error joining room:", error);
+        callback?.({ error: "Failed to join room" });
       }
     });
 
     // Handle leave room (go back to global only)
-    authSocket.on('leave_room', (callback) => {
+    authSocket.on("leave_room", (callback) => {
       try {
         const currentRoomId = userCurrentRoom.get(user.id);
 
@@ -419,12 +448,14 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
           if (voiceRoomId !== null && voiceRoomId === currentRoomId) {
             const removed = removeUserFromVoice(currentRoomId, user.id);
             if (removed) {
-              io.to(`room:${currentRoomId}`).emit('voice_user_left', {
+              io.to(`room:${currentRoomId}`).emit("voice_user_left", {
                 roomId: currentRoomId,
                 userId: user.id,
                 username: user.username,
               });
-              console.log(`✗ ${user.username} auto-left voice in room ${currentRoomId} (left room)`);
+              console.log(
+                `✗ ${user.username} auto-left voice in room ${currentRoomId} (left room)`,
+              );
             }
           }
 
@@ -440,7 +471,7 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
           }
 
           // Notify others in the room
-          io.to(`room:${currentRoomId}`).emit('user_left_room', {
+          io.to(`room:${currentRoomId}`).emit("user_left_room", {
             userId: user.id,
             username: user.username,
             roomId: currentRoomId,
@@ -451,18 +482,18 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
 
         callback?.({ success: true });
       } catch (error) {
-        console.error('Error leaving room:', error);
-        callback?.({ error: 'Failed to leave room' });
+        console.error("Error leaving room:", error);
+        callback?.({ error: "Failed to leave room" });
       }
     });
 
     // Get room users
-    authSocket.on('get_room_users', (payload: { roomId: number }, callback) => {
+    authSocket.on("get_room_users", (payload: { roomId: number }, callback) => {
       try {
         const { roomId } = payload;
 
-        if (!roomId || typeof roomId !== 'number') {
-          return callback?.({ error: 'Invalid room ID' });
+        if (!roomId || typeof roomId !== "number") {
+          return callback?.({ error: "Invalid room ID" });
         }
 
         callback?.({
@@ -470,47 +501,58 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
           users: getRoomUserList(roomId),
         });
       } catch (error) {
-        console.error('Error getting room users:', error);
-        callback?.({ error: 'Failed to get room users' });
+        console.error("Error getting room users:", error);
+        callback?.({ error: "Failed to get room users" });
       }
     });
 
     // Handle send DM
-    authSocket.on('send_dm', (payload: SendDMPayload, callback) => {
+    authSocket.on("send_dm", (payload: SendDMPayload, callback) => {
       try {
         const { recipientId, content } = payload;
 
-        if (!recipientId || typeof recipientId !== 'number') {
-          return callback?.({ error: 'Invalid recipient ID' });
+        if (!recipientId || typeof recipientId !== "number") {
+          return callback?.({ error: "Invalid recipient ID" });
         }
 
         if (recipientId === user.id) {
-          return callback?.({ error: 'Cannot send DM to yourself' });
+          return callback?.({ error: "Cannot send DM to yourself" });
         }
 
-        if (!content || content.trim() === '') {
-          return callback?.({ error: 'Message content is required' });
+        if (!content || content.trim() === "") {
+          return callback?.({ error: "Message content is required" });
         }
 
         if (content.length > 2000) {
-          return callback?.({ error: 'Message too long (max 2000 characters)' });
+          return callback?.({
+            error: "Message too long (max 2000 characters)",
+          });
         }
 
         // Check if recipient exists
         const userQueries = getUserQueries();
-        const recipient = userQueries.getById.get(recipientId) as { id: number; username: string; role: string } | undefined;
+        const recipient = userQueries.getById.get(recipientId) as
+          | { id: number; username: string; role: string }
+          | undefined;
 
         if (!recipient) {
-          return callback?.({ error: 'User not found' });
+          return callback?.({ error: "User not found" });
         }
 
         // Create/update conversation
         const conversationQueries = getConversationQueries();
-        const conversation = conversationQueries.getOrCreate(user.id, recipientId);
+        const conversation = conversationQueries.getOrCreate(
+          user.id,
+          recipientId,
+        );
 
         // Create DM message
         const dmQueries = getDMQueries();
-        const result = dmQueries.create.run(user.id, content.trim(), recipientId);
+        const result = dmQueries.create.run(
+          user.id,
+          content.trim(),
+          recipientId,
+        );
 
         // Update conversation timestamp
         conversationQueries.updateLastMessage.run(conversation.id);
@@ -524,7 +566,7 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
           recipientId,
           content: content.trim(),
           timestamp: new Date().toISOString(),
-          type: 'dm',
+          type: "dm",
           username: user.username,
           userRole: user.role,
         };
@@ -532,36 +574,36 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
         // Send to recipient if online
         const recipientSocket = connectedUsers.get(recipientId);
         if (recipientSocket) {
-          recipientSocket.emit('new_dm', dmMessage);
+          recipientSocket.emit("new_dm", dmMessage);
         }
 
         // Also send back to sender for confirmation
-        authSocket.emit('new_dm', dmMessage);
+        authSocket.emit("new_dm", dmMessage);
 
         callback?.({ success: true, message: dmMessage });
       } catch (error) {
-        console.error('Error sending DM:', error);
-        callback?.({ error: 'Failed to send DM' });
+        console.error("Error sending DM:", error);
+        callback?.({ error: "Failed to send DM" });
       }
     });
 
     // Handle DM typing indicator
-    authSocket.on('dm_typing_start', (payload: { recipientId: number }) => {
+    authSocket.on("dm_typing_start", (payload: { recipientId: number }) => {
       const { recipientId } = payload;
       const recipientSocket = connectedUsers.get(recipientId);
       if (recipientSocket) {
-        recipientSocket.emit('dm_user_typing', {
+        recipientSocket.emit("dm_user_typing", {
           userId: user.id,
           username: user.username,
         });
       }
     });
 
-    authSocket.on('dm_typing_stop', (payload: { recipientId: number }) => {
+    authSocket.on("dm_typing_stop", (payload: { recipientId: number }) => {
       const { recipientId } = payload;
       const recipientSocket = connectedUsers.get(recipientId);
       if (recipientSocket) {
-        recipientSocket.emit('dm_user_stopped_typing', {
+        recipientSocket.emit("dm_user_stopped_typing", {
           userId: user.id,
         });
       }
@@ -570,33 +612,38 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
     // ==================== Voice Channel Events ====================
 
     // Handle joining voice channel
-    authSocket.on('voice_join', (payload: VoiceJoinPayload, callback) => {
+    authSocket.on("voice_join", (payload: VoiceJoinPayload, callback) => {
       try {
         const { roomId } = payload;
 
-        if (!roomId || typeof roomId !== 'number') {
-          return callback?.({ error: 'Invalid room ID' });
+        if (!roomId || typeof roomId !== "number") {
+          return callback?.({ error: "Invalid room ID" });
         }
 
         // Check if user is in the room
         const currentRoomId = userCurrentRoom.get(user.id);
         if (currentRoomId !== roomId) {
-          return callback?.({ error: 'You must be in the room to join voice' });
+          return callback?.({ error: "You must be in the room to join voice" });
         }
 
         // Check if already in voice
         if (isUserInVoice(roomId, user.id)) {
-          return callback?.({ error: 'Already in voice channel' });
+          return callback?.({ error: "Already in voice channel" });
         }
 
         // Get existing voice users before adding
         const existingUsers = getVoiceUsers(roomId);
 
         // Add user to voice channel
-        const voiceUser = addUserToVoice(roomId, user.id, user.username, user.role);
+        const voiceUser = addUserToVoice(
+          roomId,
+          user.id,
+          user.username,
+          user.role,
+        );
 
         // Notify others in room that user joined voice
-        io.to(`room:${roomId}`).emit('voice_user_joined', {
+        io.to(`room:${roomId}`).emit("voice_user_joined", {
           roomId,
           user: voiceUser,
         });
@@ -610,18 +657,18 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
           voiceUsers: existingUsers,
         });
       } catch (error) {
-        console.error('Error joining voice:', error);
-        callback?.({ error: 'Failed to join voice channel' });
+        console.error("Error joining voice:", error);
+        callback?.({ error: "Failed to join voice channel" });
       }
     });
 
     // Handle leaving voice channel
-    authSocket.on('voice_leave', (payload: { roomId: number }, callback) => {
+    authSocket.on("voice_leave", (payload: { roomId: number }, callback) => {
       try {
         const { roomId } = payload;
 
-        if (!roomId || typeof roomId !== 'number') {
-          return callback?.({ error: 'Invalid room ID' });
+        if (!roomId || typeof roomId !== "number") {
+          return callback?.({ error: "Invalid room ID" });
         }
 
         // Remove user from voice
@@ -629,7 +676,7 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
 
         if (removed) {
           // Notify others in room
-          io.to(`room:${roomId}`).emit('voice_user_left', {
+          io.to(`room:${roomId}`).emit("voice_user_left", {
             roomId,
             userId: user.id,
             username: user.username,
@@ -640,27 +687,27 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
 
         callback?.({ success: true });
       } catch (error) {
-        console.error('Error leaving voice:', error);
-        callback?.({ error: 'Failed to leave voice channel' });
+        console.error("Error leaving voice:", error);
+        callback?.({ error: "Failed to leave voice channel" });
       }
     });
 
     // Handle WebRTC offer (relay to target user)
-    authSocket.on('voice_offer', (payload: VoiceOfferPayload, callback) => {
+    authSocket.on("voice_offer", (payload: VoiceOfferPayload, callback) => {
       try {
         const { targetUserId, offer } = payload;
 
         if (!targetUserId || !offer) {
-          return callback?.({ error: 'Invalid offer payload' });
+          return callback?.({ error: "Invalid offer payload" });
         }
 
         const targetSocket = connectedUsers.get(targetUserId);
         if (!targetSocket) {
-          return callback?.({ error: 'Target user not connected' });
+          return callback?.({ error: "Target user not connected" });
         }
 
         // Relay offer to target user
-        targetSocket.emit('voice_offer', {
+        targetSocket.emit("voice_offer", {
           fromUserId: user.id,
           fromUsername: user.username,
           offer,
@@ -668,76 +715,79 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
 
         callback?.({ success: true });
       } catch (error) {
-        console.error('Error relaying voice offer:', error);
-        callback?.({ error: 'Failed to relay offer' });
+        console.error("Error relaying voice offer:", error);
+        callback?.({ error: "Failed to relay offer" });
       }
     });
 
     // Handle WebRTC answer (relay to target user)
-    authSocket.on('voice_answer', (payload: VoiceAnswerPayload, callback) => {
+    authSocket.on("voice_answer", (payload: VoiceAnswerPayload, callback) => {
       try {
         const { targetUserId, answer } = payload;
 
         if (!targetUserId || !answer) {
-          return callback?.({ error: 'Invalid answer payload' });
+          return callback?.({ error: "Invalid answer payload" });
         }
 
         const targetSocket = connectedUsers.get(targetUserId);
         if (!targetSocket) {
-          return callback?.({ error: 'Target user not connected' });
+          return callback?.({ error: "Target user not connected" });
         }
 
         // Relay answer to target user
-        targetSocket.emit('voice_answer', {
+        targetSocket.emit("voice_answer", {
           fromUserId: user.id,
           answer,
         });
 
         callback?.({ success: true });
       } catch (error) {
-        console.error('Error relaying voice answer:', error);
-        callback?.({ error: 'Failed to relay answer' });
+        console.error("Error relaying voice answer:", error);
+        callback?.({ error: "Failed to relay answer" });
       }
     });
 
     // Handle ICE candidate exchange
-    authSocket.on('voice_ice_candidate', (payload: VoiceIceCandidatePayload, callback) => {
-      try {
-        const { targetUserId, candidate } = payload;
+    authSocket.on(
+      "voice_ice_candidate",
+      (payload: VoiceIceCandidatePayload, callback) => {
+        try {
+          const { targetUserId, candidate } = payload;
 
-        if (!targetUserId || !candidate) {
-          return callback?.({ error: 'Invalid ICE candidate payload' });
+          if (!targetUserId || !candidate) {
+            return callback?.({ error: "Invalid ICE candidate payload" });
+          }
+
+          const targetSocket = connectedUsers.get(targetUserId);
+          if (!targetSocket) {
+            return callback?.({ error: "Target user not connected" });
+          }
+
+          // Relay ICE candidate to target user
+          targetSocket.emit("voice_ice_candidate", {
+            fromUserId: user.id,
+            candidate,
+          });
+
+          callback?.({ success: true });
+        } catch (error) {
+          console.error("Error relaying ICE candidate:", error);
+          callback?.({ error: "Failed to relay ICE candidate" });
         }
-
-        const targetSocket = connectedUsers.get(targetUserId);
-        if (!targetSocket) {
-          return callback?.({ error: 'Target user not connected' });
-        }
-
-        // Relay ICE candidate to target user
-        targetSocket.emit('voice_ice_candidate', {
-          fromUserId: user.id,
-          candidate,
-        });
-
-        callback?.({ success: true });
-      } catch (error) {
-        console.error('Error relaying ICE candidate:', error);
-        callback?.({ error: 'Failed to relay ICE candidate' });
-      }
-    });
+      },
+    );
 
     // Handle voice state update (mute/unmute)
-    authSocket.on('voice_state_update', (payload: VoiceStateUpdatePayload) => {
+    authSocket.on("voice_state_update", (payload: VoiceStateUpdatePayload) => {
       const { roomId, isMuted } = payload;
 
-      if (!roomId || typeof roomId !== 'number') return;
+      if (!roomId || typeof roomId !== "number") return;
 
       // Update state
       updateUserMuteState(roomId, user.id, isMuted);
 
       // Broadcast to room
-      io.to(`room:${roomId}`).emit('voice_state_changed', {
+      io.to(`room:${roomId}`).emit("voice_state_changed", {
         roomId,
         userId: user.id,
         isMuted,
@@ -745,16 +795,16 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
     });
 
     // Handle speaking state update (for speaking indicators)
-    authSocket.on('voice_speaking', (payload: VoiceSpeakingPayload) => {
+    authSocket.on("voice_speaking", (payload: VoiceSpeakingPayload) => {
       const { roomId, isSpeaking } = payload;
 
-      if (!roomId || typeof roomId !== 'number') return;
+      if (!roomId || typeof roomId !== "number") return;
 
       // Update state
       updateUserSpeakingState(roomId, user.id, isSpeaking);
 
       // Broadcast to room
-      io.to(`room:${roomId}`).emit('voice_speaking_changed', {
+      io.to(`room:${roomId}`).emit("voice_speaking_changed", {
         roomId,
         userId: user.id,
         isSpeaking,
@@ -762,37 +812,42 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
     });
 
     // Get current voice users in a room
-    authSocket.on('voice_get_users', (payload: { roomId: number }, callback) => {
-      try {
-        const { roomId } = payload;
+    authSocket.on(
+      "voice_get_users",
+      (payload: { roomId: number }, callback) => {
+        try {
+          const { roomId } = payload;
 
-        if (!roomId || typeof roomId !== 'number') {
-          return callback?.({ error: 'Invalid room ID' });
+          if (!roomId || typeof roomId !== "number") {
+            return callback?.({ error: "Invalid room ID" });
+          }
+
+          const voiceUsers = getVoiceUsers(roomId);
+          callback?.({ success: true, voiceUsers });
+        } catch (error) {
+          console.error("Error getting voice users:", error);
+          callback?.({ error: "Failed to get voice users" });
         }
-
-        const voiceUsers = getVoiceUsers(roomId);
-        callback?.({ success: true, voiceUsers });
-      } catch (error) {
-        console.error('Error getting voice users:', error);
-        callback?.({ error: 'Failed to get voice users' });
-      }
-    });
+      },
+    );
 
     // ==================== End Voice Channel Events ====================
 
     // Handle disconnect
-    authSocket.on('disconnect', () => {
+    authSocket.on("disconnect", () => {
       console.log(`✗ User disconnected: ${user.username} (ID: ${user.id})`);
 
       // Clean up voice channel membership
       const voiceRoomsLeft = removeUserFromAllVoice(user.id);
       for (const roomId of voiceRoomsLeft) {
-        io.to(`room:${roomId}`).emit('voice_user_left', {
+        io.to(`room:${roomId}`).emit("voice_user_left", {
           roomId,
           userId: user.id,
           username: user.username,
         });
-        console.log(`✗ ${user.username} disconnected from voice in room ${roomId}`);
+        console.log(
+          `✗ ${user.username} disconnected from voice in room ${roomId}`,
+        );
       }
 
       // Clean up room membership
@@ -807,7 +862,7 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
         }
 
         // Notify others in the room
-        io.to(`room:${currentRoomId}`).emit('user_left_room', {
+        io.to(`room:${currentRoomId}`).emit("user_left_room", {
           userId: user.id,
           username: user.username,
           roomId: currentRoomId,
@@ -817,7 +872,7 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
       userCurrentRoom.delete(user.id);
       connectedUsers.delete(user.id);
 
-      io.to('global').emit('user_left', {
+      io.to("global").emit("user_left", {
         userId: user.id,
         username: user.username,
       });

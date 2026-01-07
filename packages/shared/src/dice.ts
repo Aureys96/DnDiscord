@@ -1,14 +1,16 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Dice roll result schema
 export const DiceRollResultSchema = z.object({
   formula: z.string(),
-  rolls: z.array(z.object({
-    dice: z.string(), // e.g., "2d6"
-    results: z.array(z.number()),
-    kept: z.array(z.number()).optional(), // for drop lowest/highest
-    subtotal: z.number(),
-  })),
+  rolls: z.array(
+    z.object({
+      dice: z.string(), // e.g., "2d6"
+      results: z.array(z.number()),
+      kept: z.array(z.number()).optional(), // for drop lowest/highest
+      subtotal: z.number(),
+    }),
+  ),
   modifier: z.number(),
   total: z.number(),
   criticalHit: z.boolean().optional(),
@@ -21,7 +23,7 @@ export type DiceRollResult = z.infer<typeof DiceRollResultSchema>;
 interface DiceGroup {
   count: number;
   sides: number;
-  keep?: { type: 'highest' | 'lowest'; count: number };
+  keep?: { type: "highest" | "lowest"; count: number };
 }
 
 // Parsed dice expression
@@ -43,7 +45,7 @@ interface ParsedExpression {
  */
 export function parseDiceNotation(notation: string): ParsedExpression | null {
   // Normalize the notation
-  const normalized = notation.toLowerCase().replace(/\s+/g, '');
+  const normalized = notation.toLowerCase().replace(/\s+/g, "");
 
   // Check for the drop lowest shorthand "4d6-L"
   const dropLowestMatch = normalized.match(/^(\d+)d(\d+)-l$/i);
@@ -51,11 +53,13 @@ export function parseDiceNotation(notation: string): ParsedExpression | null {
     const count = parseInt(dropLowestMatch[1], 10);
     const sides = parseInt(dropLowestMatch[2], 10);
     return {
-      groups: [{
-        count,
-        sides,
-        keep: { type: 'highest', count: count - 1 }
-      }],
+      groups: [
+        {
+          count,
+          sides,
+          keep: { type: "highest", count: count - 1 },
+        },
+      ],
       modifier: 0,
       original: notation,
     };
@@ -78,11 +82,10 @@ export function parseDiceNotation(notation: string): ParsedExpression | null {
 
   const groups: DiceGroup[] = [];
   let match;
-  let lastIndex = 0;
   let modifier = 0;
 
   // Extract all dice groups
-  const expressionPart = normalized.replace(/[+-]\d+$/, ''); // Remove trailing modifier
+  const expressionPart = normalized.replace(/[+-]\d+$/, ""); // Remove trailing modifier
   const modifierMatch = normalized.match(/([+-]\d+)$/);
   if (modifierMatch) {
     modifier = parseInt(modifierMatch[1], 10);
@@ -103,14 +106,13 @@ export function parseDiceNotation(notation: string): ParsedExpression | null {
 
     // Check for keep modifier
     if (match[3] && match[4]) {
-      const keepType = match[3] === 'h' ? 'highest' : 'lowest';
+      const keepType = match[3] === "h" ? "highest" : "lowest";
       const keepCount = parseInt(match[4], 10);
       if (keepCount < 1 || keepCount > count) return null;
       group.keep = { type: keepType, count: keepCount };
     }
 
     groups.push(group);
-    lastIndex = diceRegex.lastIndex;
   }
 
   if (groups.length === 0) {
@@ -135,7 +137,7 @@ function rollDie(sides: number): number {
  * Roll dice according to the parsed expression
  */
 export function rollDice(expression: ParsedExpression): DiceRollResult {
-  const rolls: DiceRollResult['rolls'] = [];
+  const rolls: DiceRollResult["rolls"] = [];
   let grandTotal = 0;
   let isCriticalHit = false;
   let isCriticalMiss = false;
@@ -154,7 +156,7 @@ export function rollDice(expression: ParsedExpression): DiceRollResult {
     // Apply keep modifier if present
     if (group.keep) {
       const sorted = [...results].sort((a, b) => a - b);
-      if (group.keep.type === 'highest') {
+      if (group.keep.type === "highest") {
         kept = sorted.slice(-group.keep.count);
       } else {
         kept = sorted.slice(0, group.keep.count);
@@ -171,7 +173,7 @@ export function rollDice(expression: ParsedExpression): DiceRollResult {
     }
 
     rolls.push({
-      dice: `${group.count}d${group.sides}${group.keep ? `k${group.keep.type[0]}${group.keep.count}` : ''}`,
+      dice: `${group.count}d${group.sides}${group.keep ? `k${group.keep.type[0]}${group.keep.count}` : ""}`,
       results,
       kept: group.keep ? kept : undefined,
       subtotal,
@@ -213,28 +215,31 @@ export function formatRollResult(result: DiceRollResult): string {
   for (const roll of result.rolls) {
     if (roll.kept) {
       // Show which dice were kept
-      const keptSet = new Set(roll.kept);
-      const formatted = roll.results.map((r, i) => {
-        // Find if this result is in kept (handle duplicates)
-        const isKept = roll.kept!.includes(r);
-        return isKept ? `${r}` : `~~${r}~~`;
-      }).join(', ');
+      const formatted = roll.results
+        .map((r) => {
+          // Find if this result is in kept (handle duplicates)
+          const isKept = roll.kept!.includes(r);
+          return isKept ? `${r}` : `~~${r}~~`;
+        })
+        .join(", ");
       parts.push(`[${formatted}]`);
     } else {
-      parts.push(`[${roll.results.join(', ')}]`);
+      parts.push(`[${roll.results.join(", ")}]`);
     }
   }
 
   if (result.modifier !== 0) {
-    parts.push(result.modifier > 0 ? `+${result.modifier}` : `${result.modifier}`);
+    parts.push(
+      result.modifier > 0 ? `+${result.modifier}` : `${result.modifier}`,
+    );
   }
 
-  let resultStr = `${result.formula}: ${parts.join(' ')} = **${result.total}**`;
+  let resultStr = `${result.formula}: ${parts.join(" ")} = **${result.total}**`;
 
   if (result.criticalHit) {
-    resultStr += ' (Critical Hit!)';
+    resultStr += " (Critical Hit!)";
   } else if (result.criticalMiss) {
-    resultStr += ' (Critical Miss!)';
+    resultStr += " (Critical Miss!)";
   }
 
   return resultStr;

@@ -1,30 +1,30 @@
-import Fastify from 'fastify';
-import cors from '@fastify/cors';
-import { config } from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { initializeDatabase } from './db/index.js';
-import { healthRoutes } from './routes/health.js';
-import { authRoutes } from './routes/auth.js';
-import { roomRoutes } from './routes/rooms.js';
-import { dmRoutes } from './routes/dms.js';
-import { setupSocketIO } from './socket/index.js';
+import Fastify from "fastify";
+import cors from "@fastify/cors";
+import { config } from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+import { initializeDatabase } from "./db/index.js";
+import { healthRoutes } from "./routes/health.js";
+import { authRoutes } from "./routes/auth.js";
+import { roomRoutes } from "./routes/rooms.js";
+import { dmRoutes } from "./routes/dms.js";
+import { setupSocketIO } from "./socket/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Load environment variables
-config({ path: join(__dirname, '../.env') });
+config({ path: join(__dirname, "../.env") });
 
-const PORT = parseInt(process.env.PORT || '3001', 10);
-const HOST = '0.0.0.0';
+const PORT = parseInt(process.env.PORT || "3001", 10);
+const HOST = "0.0.0.0";
 
 // Create Fastify instance
 const fastify = Fastify({
   logger: {
-    level: 'info',
+    level: "info",
     transport: {
-      target: 'pino-pretty',
+      target: "pino-pretty",
       options: {
         colorize: true,
       },
@@ -34,16 +34,16 @@ const fastify = Fastify({
 
 // Register CORS
 await fastify.register(cors, {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: process.env.CORS_ORIGIN || "http://localhost:5173",
   credentials: true,
 });
 
 // Initialize database
 try {
   initializeDatabase();
-  fastify.log.info('✓ Database initialized');
+  fastify.log.info("✓ Database initialized");
 } catch (error) {
-  fastify.log.error({ err: error }, 'Failed to initialize database');
+  fastify.log.error({ err: error }, "Failed to initialize database");
   process.exit(1);
 }
 
@@ -59,8 +59,8 @@ try {
 
   // Setup Socket.IO after Fastify is listening
   const httpServer = fastify.server;
-  const io = setupSocketIO(httpServer);
-  fastify.log.info('✓ Socket.IO initialized');
+  const _io = setupSocketIO(httpServer);
+  fastify.log.info("✓ Socket.IO initialized");
 
   fastify.log.info(`🚀 Server listening on http://${HOST}:${PORT}`);
 } catch (err) {
@@ -75,5 +75,5 @@ const shutdown = async (signal: string) => {
   process.exit(0);
 };
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

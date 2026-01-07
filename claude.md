@@ -2,26 +2,57 @@
 
 ## Critical Workflow Rules
 
-### ALWAYS Run Tests Before Pushing
-- **Before pushing ANY code to remote, run all tests and ensure they pass**
-- Server tests: `cd packages/server && npx jest --no-coverage --forceExit`
-- Client tests: `cd packages/client && npm test` (when available)
-- Never push broken code - this is a hard rule
-- If tests fail, fix them before committing/pushing
+### ALWAYS Run Tests, Linter, and Formatter Before Pushing
+
+**Before pushing ANY code to remote, run these checks in order:**
+
+1. **Run Tests**
+
+   ```bash
+   cd packages/server && npm run test
+   ```
+
+   All tests must pass. Never push broken code.
+
+2. **Run Linter**
+
+   ```bash
+   npm run lint
+   ```
+
+   Fix all ESLint errors and warnings before committing.
+
+3. **Run Formatter**
+   ```bash
+   npm run format
+   ```
+   Formats all TypeScript, JSON, and Markdown files with Prettier.
+
+**Quick Check (all in one):**
+
+```bash
+cd packages/server && npm run test && cd ../.. && npm run lint && npm run format
+```
+
+- If any step fails, fix the issues before committing/pushing
+- This is a hard rule - never skip these checks
 
 ## Commit Philosophy
+
 - **Always commit meaningful changes with meaningful commit messages**
 - This allows easy rollback if anything goes wrong
 - Follow conventional commits format: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`
 - Each commit should represent a working state
 
 ## Project Structure
+
 - This is a TypeScript monorepo using npm workspaces
 - Three packages: `shared`, `server`, `client`
 - Shared types and utilities go in `@dnd-voice/shared`
 - Never duplicate types between packages
 
 ## Code Style
+
 - Use TypeScript strict mode
 - Prefer functional components and hooks in React
 - Use Zod for runtime validation at API boundaries
@@ -31,17 +62,20 @@
 ## UI/UX Guidelines
 
 **Reference Design Documents:**
+
 - `docs/design/LAYOUT.md` - Application layout and structure
 - `docs/design/THEME.md` - Colors, typography, and visual styling
 - `docs/design/COMPONENTS.md` - Component specifications and states
 
 ### Design Philosophy
+
 - **Discord-inspired:** Follow Discord's proven layout patterns (three-column, sidebars, bottom controls)
 - **Dark theme first:** Dark theme only for now (reduces eye strain during long DnD sessions)
 - **DnD-focused:** Highlight DM tools, dice roller, and role distinctions
 - **Consistency:** Use the same component patterns throughout the application
 
 ### Layout Rules
+
 - Three-column layout: Room List (64px) → Channel Sidebar (240px) → Main Content (flex) → Members Sidebar (240px)
 - User controls always at bottom-left (mic, deafen, settings)
 - Chat input always at bottom of main content area
@@ -49,6 +83,7 @@
 - Mobile: Single column with bottom tab navigation
 
 ### Color Palette (Dark Theme)
+
 ```
 Backgrounds:     gray-900 → gray-800 → gray-700 → gray-600 (hierarchy)
 Text:            gray-50 (primary) → gray-300 → gray-400 → gray-500 (muted)
@@ -62,6 +97,7 @@ Speaking:        green-500 with glow effect
 ```
 
 ### Typography
+
 - Font: System font stack (Inter preferred)
 - Sizes: Use Tailwind scale (text-xs through text-2xl)
 - Weights: normal (400), medium (500), semibold (600)
@@ -69,6 +105,7 @@ Speaking:        green-500 with glow effect
 - Timestamps: text-xs, text-muted
 
 ### Component Standards
+
 - **Buttons:** 40px height default, rounded-md, clear hover/active states
 - **Inputs:** 40px height, bg-gray-800, border gray-700, focus ring violet-500
 - **Cards/Panels:** bg-gray-800, rounded-lg, shadow-lg
@@ -76,7 +113,9 @@ Speaking:        green-500 with glow effect
 - **Icons:** 20px default, use consistent icon library (Lucide or Heroicons)
 
 ### Interactive States
+
 Every interactive element must have:
+
 - Default state
 - Hover state (bg change or scale)
 - Active/pressed state
@@ -85,6 +124,7 @@ Every interactive element must have:
 - Loading state (spinner or skeleton)
 
 ### Spacing & Layout
+
 - Use Tailwind spacing scale consistently
 - Standard padding: 16px (p-4) for cards, 12px (p-3) for compact elements
 - Standard gap: 8px (gap-2) for tight, 16px (gap-4) for normal
@@ -92,6 +132,7 @@ Every interactive element must have:
 - Message padding: 16px horizontal, 4px vertical (grouped messages)
 
 ### Animations
+
 - Duration: 150ms default (fast, responsive feel)
 - Easing: ease-in-out
 - Use for: hover states, modals, toasts, panels sliding
@@ -99,11 +140,13 @@ Every interactive element must have:
 - Avoid: excessive animations that distract from content
 
 ### Responsive Breakpoints
+
 - Desktop: ≥1200px (full layout)
 - Tablet: 768-1199px (collapsible sidebars)
 - Mobile: <768px (single column, bottom nav)
 
 ### Accessibility Requirements
+
 - Focus visible on all interactive elements
 - Color contrast: minimum 4.5:1 for text
 - Keyboard navigation for all features
@@ -112,12 +155,14 @@ Every interactive element must have:
 - PTT (Push-to-Talk) keyboard shortcut
 
 ### DM vs Player UI
+
 - DM sees: Music player controls, Soundboard, Room management, User management
 - Players see: Read-only music info, their own mute controls
 - Use role checks to conditionally render DM-only features
 - Never hide features with CSS only - check permissions in logic
 
 ### Component File Structure
+
 ```
 src/components/
 ├── ui/                 # Generic reusable components
@@ -138,6 +183,7 @@ src/components/
 ```
 
 ### State Management (Zustand)
+
 - Auth store: user, token, login/logout actions
 - UI store: sidebar visibility, active modals
 - Chat store: messages, channels, send actions
@@ -145,12 +191,14 @@ src/components/
 - Keep stores focused (single responsibility)
 
 ## Error Handling
+
 - Always handle errors gracefully
 - Provide user-friendly error messages
 - Log errors for debugging (especially WebRTC issues)
 - Never expose sensitive information in error messages
 
 ## Security
+
 - Never commit secrets or credentials
 - Use environment variables for configuration
 - Validate all user inputs with Zod schemas
@@ -160,6 +208,7 @@ src/components/
 ## Testing Strategy
 
 ### Manual Testing
+
 - Test each milestone in Chrome browser using the browser automation tools
 - **Chrome Extension:** The user disables the Chrome extension for security. If browser automation fails, ask the user to enable it before testing.
 - Test with 2+ browser windows for real-time features
@@ -169,6 +218,7 @@ src/components/
 ### Automated Testing
 
 **General Rules:**
+
 - **All milestones must have automated tests before committing**
 - **After each milestone is complete, write integration tests for the new functionality** - do this proactively without waiting to be asked
 - Write tests that are adequate and can be relatively easily implemented
@@ -179,6 +229,7 @@ src/components/
 **Testing Strategy - Integration Tests First:**
 
 We use **integration tests** as our primary testing approach:
+
 - Test real Fastify server using `fastify.inject()` (simulates HTTP without network)
 - Test real database operations using separate test database files
 - Test real implementations (bcrypt, JWT, Zod validation, etc.)
@@ -186,6 +237,7 @@ We use **integration tests** as our primary testing approach:
 - This ensures components work together correctly and catches real bugs
 
 **Database Testing Approach:**
+
 - Use separate test database files (e.g., `test-auth.db`, `test-health.db`)
 - Set `process.env.DATABASE_PATH` to test database path in `beforeAll()`
 - Initialize test database with real schema using `initializeDatabase()`
@@ -194,16 +246,17 @@ We use **integration tests** as our primary testing approach:
 - Never use the development database for tests
 
 **Test Structure:**
+
 ```typescript
-describe('Feature Name', () => {
+describe("Feature Name", () => {
   let fastify: FastifyInstance;
-  const testDbPath = join(__dirname, '../../test-feature.db');
+  const testDbPath = join(__dirname, "../../test-feature.db");
 
   beforeAll(async () => {
     // Setup: Create test database and Fastify server
     if (existsSync(testDbPath)) unlinkSync(testDbPath);
     process.env.DATABASE_PATH = testDbPath;
-    process.env.JWT_SECRET = 'test-secret-key';
+    process.env.JWT_SECRET = "test-secret-key";
     initializeDatabase();
 
     fastify = Fastify({ logger: false });
@@ -223,13 +276,14 @@ describe('Feature Name', () => {
     db.prepare("DELETE FROM table WHERE ...").run();
   });
 
-  it('should do something specific', async () => {
+  it("should do something specific", async () => {
     // Test implementation
   });
 });
 ```
 
 **Test Coverage Guidelines:**
+
 - API endpoints: Test success cases, error cases (4xx), and edge cases
 - Authentication: Test token validation, password hashing, protected routes, expired tokens
 - Database operations: Test CRUD operations, unique constraints, foreign keys
@@ -237,6 +291,7 @@ describe('Feature Name', () => {
 - WebRTC signaling: Test offer/answer flow (when implemented)
 
 **When to Switch to Unit Tests:**
+
 - If integration tests become **too complex or difficult to implement** for a specific feature, you may propose switching to unit tests with mocks
 - **IMPORTANT:** You must get explicit user approval before switching strategies
 - When proposing, explain:
@@ -247,6 +302,7 @@ describe('Feature Name', () => {
 - Maintain consistency: Don't mix strategies in the same test file
 
 **Test Isolation Rules:**
+
 - Each test must be independent (can run in any order)
 - Never rely on state from previous tests
 - Clean up all test data in `beforeEach()` or `afterEach()`
@@ -254,18 +310,21 @@ describe('Feature Name', () => {
 - Test one thing per test case
 
 **What NOT to Mock:**
+
 - Database layer (use real test database)
 - Fastify server (use `fastify.inject()`)
 - Business logic (bcrypt, JWT, Zod validation)
 - Middleware (test real authentication flow)
 
 **What TO Mock (if needed in future):**
+
 - External APIs (third-party services)
 - File system operations (if not using test files)
 - Time-dependent behavior (use `jest.useFakeTimers()`)
 - WebRTC browser APIs (use fake peer connections)
 
 ## Milestone Documentation
+
 - **After implementing each milestone, provide a comprehensive explanation of how the new features work**
 - Explanations should be detailed and educational, targeting a backend engineer learning frontend concepts
 - Include:
@@ -278,24 +337,28 @@ describe('Feature Name', () => {
 - This helps the user understand the architecture and makes future debugging easier
 
 ## WebRTC Debugging
+
 - Add extensive logging for WebRTC signaling
 - Log each step: offer, answer, ICE candidates
 - Monitor connection states: `iceConnectionState`, `connectionState`
 - Test voice with headphones to avoid feedback
 
 ## Dependencies
+
 - Only add dependencies that are necessary
 - Prefer well-maintained packages with active communities
 - Check bundle size impact for client dependencies
 - Document why each dependency is needed
 
 ## Performance
+
 - Lazy load routes in React
 - Use React.memo for expensive components
 - Debounce expensive operations (e.g., voice activity detection)
 - Optimize database queries with proper indexes
 
 ## Accessibility
+
 - Use semantic HTML
 - Provide keyboard shortcuts (especially for PTT)
 - Ensure sufficient color contrast
