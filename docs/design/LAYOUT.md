@@ -41,12 +41,14 @@ We follow Discord's proven layout pattern, adapted for DnD sessions.
 ## Layout Regions
 
 ### 1. Room List (Leftmost - 64px wide)
+
 - Vertical list of room icons/avatars
 - Current room highlighted
 - Add room button at bottom (DM only)
 - Tooltip on hover showing room name
 
 ### 2. Channel Sidebar (200-240px wide)
+
 - Room name at top
 - Text channels section
 - Voice channels section with connected users
@@ -56,6 +58,7 @@ We follow Discord's proven layout pattern, adapted for DnD sessions.
 - Collapsible on mobile
 
 ### 3. Main Content Area (Flexible)
+
 - Default: Text chat for selected channel
 - Alternative views:
   - Voice channel focus (when in voice)
@@ -64,6 +67,7 @@ We follow Discord's proven layout pattern, adapted for DnD sessions.
   - Soundboard expanded view
 
 ### 4. Members Sidebar (200-240px wide)
+
 - Grouped by role (DM, Players)
 - Online status indicators
 - Currently speaking indicator
@@ -71,6 +75,7 @@ We follow Discord's proven layout pattern, adapted for DnD sessions.
 - Collapsible
 
 ### 5. User Controls (Bottom Left)
+
 - User avatar and name
 - Microphone mute toggle
 - Audio deafen toggle
@@ -78,6 +83,7 @@ We follow Discord's proven layout pattern, adapted for DnD sessions.
 - Always visible
 
 ### 6. Input Area (Bottom of Main Content)
+
 - Message input field
 - Dice roller button (opens dice panel)
 - Attachment button (future)
@@ -135,15 +141,18 @@ App
 ## Responsive Breakpoints
 
 ### Desktop (≥1200px)
+
 - Full layout with all sidebars visible
 - All features accessible
 
 ### Tablet (768px - 1199px)
+
 - Room list + Main content visible
 - Channel sidebar as overlay (hamburger menu)
 - Members sidebar hidden (toggle button)
 
 ### Mobile (< 768px)
+
 - Single column view
 - Bottom navigation tabs:
   - Rooms

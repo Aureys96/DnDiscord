@@ -1,5 +1,5 @@
-import { type FormEvent, useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { type FormEvent, useState, useRef, useEffect } from "react";
+import { Send } from "lucide-react";
 
 interface ChatInputProps {
   onSendMessage: (content: string) => Promise<boolean>;
@@ -12,9 +12,9 @@ export function ChatInput({
   onSendMessage,
   onTypingChange,
   disabled = false,
-  placeholder = 'Type a message...',
+  placeholder = "Type a message...",
 }: ChatInputProps) {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<number | undefined>(undefined);
@@ -60,7 +60,7 @@ export function ChatInput({
     const success = await onSendMessage(trimmed);
 
     if (success) {
-      setMessage('');
+      setMessage("");
     }
 
     setIsSending(false);
@@ -69,7 +69,7 @@ export function ChatInput({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Submit on Enter (without Shift)
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
     }
@@ -91,8 +91,8 @@ export function ChatInput({
           rows={1}
           className="flex-1 bg-transparent text-gray-100 placeholder-gray-400 resize-none focus:outline-none min-h-[24px] max-h-[120px]"
           style={{
-            height: 'auto',
-            overflow: message.split('\n').length > 1 ? 'auto' : 'hidden',
+            height: "auto",
+            overflow: message.split("\n").length > 1 ? "auto" : "hidden",
           }}
         />
         <button

@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { api } from '../lib/api';
-import type { User, AuthResponse } from '@dnd-voice/shared';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { api } from "../lib/api";
+import type { User, AuthResponse } from "@dnd-voice/shared";
 
 interface AuthState {
   user: User | null;
@@ -15,7 +15,7 @@ interface AuthState {
   register: (
     username: string,
     password: string,
-    role?: 'dm' | 'player'
+    role?: "dm" | "player",
   ) => Promise<void>;
   logout: () => void;
   initialize: () => Promise<void>;
@@ -34,7 +34,7 @@ export const useAuthStore = create<AuthState>()(
       login: async (username: string, password: string) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await api.post<AuthResponse>('/auth/login', {
+          const response = await api.post<AuthResponse>("/auth/login", {
             username,
             password,
           });
@@ -49,7 +49,7 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           set({
             isLoading: false,
-            error: error instanceof Error ? error.message : 'Login failed',
+            error: error instanceof Error ? error.message : "Login failed",
           });
           throw error;
         }
@@ -58,11 +58,11 @@ export const useAuthStore = create<AuthState>()(
       register: async (
         username: string,
         password: string,
-        role: 'dm' | 'player' = 'player'
+        role: "dm" | "player" = "player",
       ) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await api.post<AuthResponse>('/auth/register', {
+          const response = await api.post<AuthResponse>("/auth/register", {
             username,
             password,
             role,
@@ -79,7 +79,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             isLoading: false,
             error:
-              error instanceof Error ? error.message : 'Registration failed',
+              error instanceof Error ? error.message : "Registration failed",
           });
           throw error;
         }
@@ -108,7 +108,7 @@ export const useAuthStore = create<AuthState>()(
         // Verify token is still valid by fetching current user
         set({ isLoading: true });
         try {
-          const user = await api.get<User>('/auth/me');
+          const user = await api.get<User>("/auth/me");
           set({
             user,
             isLoading: false,
@@ -129,9 +129,9 @@ export const useAuthStore = create<AuthState>()(
       clearError: () => set({ error: null }),
     }),
     {
-      name: 'dnd-voice-auth',
+      name: "dnd-voice-auth",
       // Only persist token, not loading/error states
       partialize: (state) => ({ token: state.token }),
-    }
-  )
+    },
+  ),
 );

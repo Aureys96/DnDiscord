@@ -1,7 +1,7 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // User types
-export const UserRoleSchema = z.enum(['dm', 'player']);
+export const UserRoleSchema = z.enum(["dm", "player"]);
 export type UserRole = z.infer<typeof UserRoleSchema>;
 
 export const UserSchema = z.object({
@@ -23,17 +23,23 @@ export const RoomSchema = z.object({
 export type Room = z.infer<typeof RoomSchema>;
 
 export const CreateRoomRequestSchema = z.object({
-  name: z.string().min(1, 'Room name is required').max(50, 'Room name must be at most 50 characters'),
+  name: z
+    .string()
+    .min(1, "Room name is required")
+    .max(50, "Room name must be at most 50 characters"),
 });
 export type CreateRoomRequest = z.infer<typeof CreateRoomRequestSchema>;
 
 export const UpdateRoomRequestSchema = z.object({
-  name: z.string().min(1, 'Room name is required').max(50, 'Room name must be at most 50 characters'),
+  name: z
+    .string()
+    .min(1, "Room name is required")
+    .max(50, "Room name must be at most 50 characters"),
 });
 export type UpdateRoomRequest = z.infer<typeof UpdateRoomRequestSchema>;
 
 // Message types
-export const MessageTypeSchema = z.enum(['room', 'global', 'dm', 'roll']);
+export const MessageTypeSchema = z.enum(["room", "global", "dm", "roll"]);
 export type MessageType = z.infer<typeof MessageTypeSchema>;
 
 export const MessageSchema = z.object({
@@ -44,11 +50,13 @@ export const MessageSchema = z.object({
   timestamp: z.string(),
   type: MessageTypeSchema,
   recipientId: z.number().nullable().optional(),
-  rollResult: z.object({
-    rolls: z.array(z.number()),
-    total: z.number(),
-    formula: z.string(),
-  }).optional(),
+  rollResult: z
+    .object({
+      rolls: z.array(z.number()),
+      total: z.number(),
+      formula: z.string(),
+    })
+    .optional(),
 });
 export type Message = z.infer<typeof MessageSchema>;
 
@@ -61,15 +69,21 @@ export type HealthResponse = z.infer<typeof HealthResponseSchema>;
 
 // Authentication types
 export const LoginRequestSchema = z.object({
-  username: z.string().min(3, 'Username must be at least 3 characters'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
 export const RegisterRequestSchema = z.object({
-  username: z.string().min(3, 'Username must be at least 3 characters').max(30, 'Username must be at most 30 characters'),
-  password: z.string().min(6, 'Password must be at least 6 characters').max(100, 'Password must be at most 100 characters'),
-  role: UserRoleSchema.optional().default('player'),
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(30, "Username must be at most 30 characters"),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .max(100, "Password must be at most 100 characters"),
+  role: UserRoleSchema.optional().default("player"),
 });
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
 
@@ -101,7 +115,7 @@ export const DMMessageSchema = z.object({
   userId: z.number(),
   content: z.string(),
   timestamp: z.string(),
-  type: z.literal('dm'),
+  type: z.literal("dm"),
   recipientId: z.number(),
   username: z.string().optional(),
   userRole: UserRoleSchema.optional(),
@@ -110,8 +124,11 @@ export type DMMessage = z.infer<typeof DMMessageSchema>;
 
 // Request schemas for DM API
 export const SendDMRequestSchema = z.object({
-  recipientId: z.number().int().positive('Recipient ID is required'),
-  content: z.string().min(1, 'Message content is required').max(2000, 'Message must be at most 2000 characters'),
+  recipientId: z.number().int().positive("Recipient ID is required"),
+  content: z
+    .string()
+    .min(1, "Message content is required")
+    .max(2000, "Message must be at most 2000 characters"),
 });
 export type SendDMRequest = z.infer<typeof SendDMRequestSchema>;
 

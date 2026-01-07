@@ -1,7 +1,10 @@
-import Database, { type Database as DatabaseType, type Statement } from 'better-sqlite3';
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import bcrypt from 'bcrypt';
+import Database, {
+  type Database as DatabaseType,
+  type Statement,
+} from "better-sqlite3";
+import { readFileSync } from "fs";
+import { join } from "path";
+import bcrypt from "bcrypt";
 
 let db: DatabaseType;
 
@@ -13,8 +16,8 @@ function getSchemaPath(): string {
   }
   // Try multiple locations to support both running from project root and server package
   const possiblePaths = [
-    join(process.cwd(), 'packages/server/src/db/schema.sql'), // From project root
-    join(process.cwd(), 'src/db/schema.sql'), // From packages/server
+    join(process.cwd(), "packages/server/src/db/schema.sql"), // From project root
+    join(process.cwd(), "src/db/schema.sql"), // From packages/server
   ];
 
   for (const schemaPath of possiblePaths) {
@@ -33,10 +36,10 @@ function getSchemaPath(): string {
 function getDefaultDbPath(): string {
   // Try multiple locations
   const cwd = process.cwd();
-  if (cwd.endsWith('packages/server')) {
-    return join(cwd, '../../data/dnd.db');
+  if (cwd.endsWith("packages/server")) {
+    return join(cwd, "../../data/dnd.db");
   }
-  return join(cwd, 'data/dnd.db');
+  return join(cwd, "data/dnd.db");
 }
 
 export function getDatabase(): DatabaseType {
@@ -46,7 +49,7 @@ export function getDatabase(): DatabaseType {
     db = new Database(dbPath);
 
     // Enable foreign keys
-    db.pragma('foreign_keys = ON');
+    db.pragma("foreign_keys = ON");
   }
 
   return db;
@@ -55,22 +58,28 @@ export function getDatabase(): DatabaseType {
 // Initialize database schema
 export function initializeDatabase() {
   const database = getDatabase();
-  const schema = readFileSync(getSchemaPath(), 'utf-8');
+  const schema = readFileSync(getSchemaPath(), "utf-8");
   database.exec(schema);
 
   // Seed default DM user if not exists
-  const existingUser = database.prepare('SELECT id FROM users WHERE username = ?').get('admin');
+  const existingUser = database
+    .prepare("SELECT id FROM users WHERE username = ?")
+    .get("admin");
 
   if (!existingUser) {
     // Hash password with bcrypt (synchronous for initialization)
-    const passwordHash = bcrypt.hashSync('admin123', 10);
+    const passwordHash = bcrypt.hashSync("admin123", 10);
 
-    database.prepare(`
+    database
+      .prepare(
+        `
       INSERT INTO users (username, password_hash, role)
       VALUES (?, ?, ?)
-    `).run('admin', passwordHash, 'dm');
+    `,
+      )
+      .run("admin", passwordHash, "dm");
 
-    console.log('✓ Created default DM user: admin / admin123');
+    console.log("✓ Created default DM user: admin / admin123");
   }
 }
 
@@ -82,9 +91,11 @@ export function getUserQueries(): {
 } {
   const database = getDatabase();
   return {
-    getByUsername: database.prepare('SELECT * FROM users WHERE username = ?'),
-    getById: database.prepare('SELECT * FROM users WHERE id = ?'),
-    create: database.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)'),
+    getByUsername: database.prepare("SELECT * FROM users WHERE username = ?"),
+    getById: database.prepare("SELECT * FROM users WHERE id = ?"),
+    create: database.prepare(
+      "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+    ),
   };
 }
 
@@ -163,8 +174,8 @@ export function getRoomQueries(): {
       WHERE r.created_by = ?
       ORDER BY r.created_at DESC
     `),
-    delete: database.prepare('DELETE FROM rooms WHERE id = ?'),
-    update: database.prepare('UPDATE rooms SET name = ? WHERE id = ?'),
+    delete: database.prepare("DELETE FROM rooms WHERE id = ?"),
+    update: database.prepare("UPDATE rooms SET name = ? WHERE id = ?"),
   };
 }
 
@@ -194,8 +205,14 @@ export function getConversationQueries(): {
     create: createStmt,
     // Get existing conversation or create new one (always store smaller ID first for consistency)
     getOrCreate: (user1Id: number, user2Id: number) => {
-      const [smallerId, largerId] = user1Id < user2Id ? [user1Id, user2Id] : [user2Id, user1Id];
-      let conversation = getByUsersStmt.get(smallerId, largerId, largerId, smallerId) as { id: number } | undefined;
+      const [smallerId, largerId] =
+        user1Id < user2Id ? [user1Id, user2Id] : [user2Id, user1Id];
+      let conversation = getByUsersStmt.get(
+        smallerId,
+        largerId,
+        largerId,
+        smallerId,
+      ) as { id: number } | undefined;
 
       if (!conversation) {
         const result = createStmt.run(smallerId, largerId);
@@ -250,7 +267,7 @@ export function getConversationQueries(): {
     updateLastMessage: database.prepare(`
       UPDATE conversations SET last_message_at = CURRENT_TIMESTAMP WHERE id = ?
     `),
-    delete: database.prepare('DELETE FROM conversations WHERE id = ?'),
+    delete: database.prepare("DELETE FROM conversations WHERE id = ?"),
   };
 }
 

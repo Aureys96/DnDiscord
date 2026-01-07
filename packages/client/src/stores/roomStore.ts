@@ -1,12 +1,12 @@
-import { create } from 'zustand';
-import type { Room } from '@dnd-voice/shared';
-import { api } from '../lib/api';
+import { create } from "zustand";
+import type { Room } from "@dnd-voice/shared";
+import { api } from "../lib/api";
 import {
   type RoomUser,
   joinRoom as socketJoinRoom,
   leaveRoom as socketLeaveRoom,
   getSocket,
-} from '../lib/socket';
+} from "../lib/socket";
 
 interface RoomState {
   rooms: Room[];
@@ -36,11 +36,11 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const response = await api.fetch('/rooms');
+      const response = await api.fetch("/rooms");
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to fetch rooms');
+        throw new Error(data.error || "Failed to fetch rooms");
       }
 
       const data = await response.json();
@@ -48,7 +48,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch rooms',
+        error: error instanceof Error ? error.message : "Failed to fetch rooms",
       });
     }
   },
@@ -57,14 +57,14 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const response = await api.fetch('/rooms', {
-        method: 'POST',
+      const response = await api.fetch("/rooms", {
+        method: "POST",
         body: JSON.stringify({ name }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to create room');
+        throw new Error(data.error || "Failed to create room");
       }
 
       const data = await response.json();
@@ -79,7 +79,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to create room',
+        error: error instanceof Error ? error.message : "Failed to create room",
       });
       return null;
     }
@@ -90,12 +90,12 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 
     try {
       const response = await api.fetch(`/rooms/${roomId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to delete room');
+        throw new Error(data.error || "Failed to delete room");
       }
 
       // If we're in the deleted room, leave it
@@ -110,7 +110,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       return true;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to delete room',
+        error: error instanceof Error ? error.message : "Failed to delete room",
       });
       return false;
     }
@@ -130,7 +130,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       const response = await socketJoinRoom(roomId);
 
       if (!response.success) {
-        throw new Error(response.error || 'Failed to join room');
+        throw new Error(response.error || "Failed to join room");
       }
 
       set({
@@ -141,31 +141,47 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       // Set up room user listeners
       const socket = getSocket();
       if (socket) {
-        socket.on('user_joined_room', (data: { userId: number; username: string; role: string; roomId: number }) => {
-          if (data.roomId === get().currentRoomId) {
-            set((state) => ({
-              roomUsers: [...state.roomUsers.filter((u) => u.userId !== data.userId), {
-                userId: data.userId,
-                username: data.username,
-                role: data.role,
-              }],
-            }));
-          }
-        });
+        socket.on(
+          "user_joined_room",
+          (data: {
+            userId: number;
+            username: string;
+            role: string;
+            roomId: number;
+          }) => {
+            if (data.roomId === get().currentRoomId) {
+              set((state) => ({
+                roomUsers: [
+                  ...state.roomUsers.filter((u) => u.userId !== data.userId),
+                  {
+                    userId: data.userId,
+                    username: data.username,
+                    role: data.role,
+                  },
+                ],
+              }));
+            }
+          },
+        );
 
-        socket.on('user_left_room', (data: { userId: number; roomId: number }) => {
-          if (data.roomId === get().currentRoomId) {
-            set((state) => ({
-              roomUsers: state.roomUsers.filter((u) => u.userId !== data.userId),
-            }));
-          }
-        });
+        socket.on(
+          "user_left_room",
+          (data: { userId: number; roomId: number }) => {
+            if (data.roomId === get().currentRoomId) {
+              set((state) => ({
+                roomUsers: state.roomUsers.filter(
+                  (u) => u.userId !== data.userId,
+                ),
+              }));
+            }
+          },
+        );
       }
 
       return true;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to join room',
+        error: error instanceof Error ? error.message : "Failed to join room",
       });
       return false;
     }
@@ -184,8 +200,8 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       // Remove room user listeners
       const socket = getSocket();
       if (socket) {
-        socket.off('user_joined_room');
-        socket.off('user_left_room');
+        socket.off("user_joined_room");
+        socket.off("user_left_room");
       }
 
       set({
@@ -194,7 +210,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to leave room',
+        error: error instanceof Error ? error.message : "Failed to leave room",
       });
     }
   },

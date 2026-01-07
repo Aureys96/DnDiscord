@@ -1,5 +1,5 @@
-import { type InputHTMLAttributes, forwardRef, useState } from 'react';
-import { Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { type InputHTMLAttributes, forwardRef, useState } from "react";
+import { Eye, EyeOff, AlertCircle } from "lucide-react";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -8,10 +8,10 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, type, className = '', id, ...props }, ref) => {
+  ({ label, error, helperText, type, className = "", id, ...props }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
-    const isPassword = type === 'password';
-    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
+    const isPassword = type === "password";
+    const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
 
     return (
       <div className="w-full">
@@ -27,7 +27,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             id={inputId}
-            type={isPassword && showPassword ? 'text' : type}
+            type={isPassword && showPassword ? "text" : type}
             className={`
               w-full h-10 px-3
               bg-gray-800 text-gray-50 placeholder-gray-500
@@ -37,10 +37,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               disabled:opacity-50 disabled:cursor-not-allowed
               ${
                 error
-                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
-                  : 'border-gray-700 focus:border-violet-500 focus:ring-violet-500/20'
+                  ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                  : "border-gray-700 focus:border-violet-500 focus:ring-violet-500/20"
               }
-              ${isPassword ? 'pr-10' : ''}
+              ${isPassword ? "pr-10" : ""}
               ${className}
             `}
             {...props}
@@ -71,7 +71,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
-Input.displayName = 'Input';
+Input.displayName = "Input";

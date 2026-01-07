@@ -1,7 +1,7 @@
-import { io, Socket } from 'socket.io-client';
-import { useAuthStore } from '../stores/authStore';
+import { io, Socket } from "socket.io-client";
+import { useAuthStore } from "../stores/authStore";
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 let socket: Socket | null = null;
 
@@ -55,7 +55,7 @@ export function connectSocket(): Socket {
   const token = useAuthStore.getState().token;
 
   if (!token) {
-    throw new Error('No auth token available');
+    throw new Error("No auth token available");
   }
 
   if (socket?.connected) {
@@ -70,18 +70,21 @@ export function connectSocket(): Socket {
     reconnectionDelay: 1000,
   });
 
-  socket.on('connect', () => {
-    console.log('✓ Connected to socket server');
+  socket.on("connect", () => {
+    console.log("✓ Connected to socket server");
   });
 
-  socket.on('disconnect', (reason) => {
-    console.log('✗ Disconnected from socket server:', reason);
+  socket.on("disconnect", (reason) => {
+    console.log("✗ Disconnected from socket server:", reason);
   });
 
-  socket.on('connect_error', (error) => {
-    console.error('Socket connection error:', error.message);
+  socket.on("connect_error", (error) => {
+    console.error("Socket connection error:", error.message);
     // If token expired or invalid, disconnect and let auth handle it
-    if (error.message === 'Token expired' || error.message === 'Invalid token') {
+    if (
+      error.message === "Token expired" ||
+      error.message === "Invalid token"
+    ) {
       disconnectSocket();
     }
   });
@@ -98,44 +101,60 @@ export function disconnectSocket(): void {
 
 export function sendMessage(
   content: string,
-  type: 'global' | 'room' = 'global',
-  roomId?: number
+  type: "global" | "room" = "global",
+  roomId?: number,
 ): Promise<{ success: boolean; message?: ChatMessage; error?: string }> {
   return new Promise((resolve) => {
     if (!socket?.connected) {
-      resolve({ success: false, error: 'Not connected to server' });
+      resolve({ success: false, error: "Not connected to server" });
       return;
     }
 
-    socket.emit('send_message', { content, type, roomId }, (response: { success: boolean; message?: ChatMessage; error?: string }) => {
-      resolve(response);
-    });
+    socket.emit(
+      "send_message",
+      { content, type, roomId },
+      (response: {
+        success: boolean;
+        message?: ChatMessage;
+        error?: string;
+      }) => {
+        resolve(response);
+      },
+    );
   });
 }
 
 export function getMessages(
-  type: 'global' | 'room' = 'global',
+  type: "global" | "room" = "global",
   roomId?: number,
-  limit = 50
+  limit = 50,
 ): Promise<{ success: boolean; messages?: ChatMessage[]; error?: string }> {
   return new Promise((resolve) => {
     if (!socket?.connected) {
-      resolve({ success: false, error: 'Not connected to server' });
+      resolve({ success: false, error: "Not connected to server" });
       return;
     }
 
-    socket.emit('get_messages', { type, roomId, limit }, (response: { success: boolean; messages?: ChatMessage[]; error?: string }) => {
-      resolve(response);
-    });
+    socket.emit(
+      "get_messages",
+      { type, roomId, limit },
+      (response: {
+        success: boolean;
+        messages?: ChatMessage[];
+        error?: string;
+      }) => {
+        resolve(response);
+      },
+    );
   });
 }
 
 export function emitTypingStart(roomId?: number): void {
-  socket?.emit('typing_start', roomId ? { roomId } : undefined);
+  socket?.emit("typing_start", roomId ? { roomId } : undefined);
 }
 
 export function emitTypingStop(roomId?: number): void {
-  socket?.emit('typing_stop', roomId ? { roomId } : undefined);
+  socket?.emit("typing_stop", roomId ? { roomId } : undefined);
 }
 
 export interface RoomUser {
@@ -145,45 +164,66 @@ export interface RoomUser {
 }
 
 export function joinRoom(
-  roomId: number
-): Promise<{ success: boolean; roomId?: number; users?: RoomUser[]; error?: string }> {
+  roomId: number,
+): Promise<{
+  success: boolean;
+  roomId?: number;
+  users?: RoomUser[];
+  error?: string;
+}> {
   return new Promise((resolve) => {
     if (!socket?.connected) {
-      resolve({ success: false, error: 'Not connected to server' });
+      resolve({ success: false, error: "Not connected to server" });
       return;
     }
 
-    socket.emit('join_room', { roomId }, (response: { success: boolean; roomId?: number; users?: RoomUser[]; error?: string }) => {
-      resolve(response);
-    });
+    socket.emit(
+      "join_room",
+      { roomId },
+      (response: {
+        success: boolean;
+        roomId?: number;
+        users?: RoomUser[];
+        error?: string;
+      }) => {
+        resolve(response);
+      },
+    );
   });
 }
 
 export function leaveRoom(): Promise<{ success: boolean; error?: string }> {
   return new Promise((resolve) => {
     if (!socket?.connected) {
-      resolve({ success: false, error: 'Not connected to server' });
+      resolve({ success: false, error: "Not connected to server" });
       return;
     }
 
-    socket.emit('leave_room', (response: { success: boolean; error?: string }) => {
-      resolve(response);
-    });
+    socket.emit(
+      "leave_room",
+      (response: { success: boolean; error?: string }) => {
+        resolve(response);
+      },
+    );
   });
 }
 
 export function getRoomUsers(
-  roomId: number
+  roomId: number,
 ): Promise<{ success: boolean; users?: RoomUser[]; error?: string }> {
   return new Promise((resolve) => {
     if (!socket?.connected) {
-      resolve({ success: false, error: 'Not connected to server' });
+      resolve({ success: false, error: "Not connected to server" });
       return;
     }
 
-    socket.emit('get_room_users', { roomId }, (response: { success: boolean; users?: RoomUser[]; error?: string }) => {
-      resolve(response);
-    });
+    socket.emit(
+      "get_room_users",
+      { roomId },
+      (response: { success: boolean; users?: RoomUser[]; error?: string }) => {
+        resolve(response);
+      },
+    );
   });
 }
 
@@ -194,7 +234,7 @@ export interface DMMessage {
   recipientId: number;
   content: string;
   timestamp: string;
-  type: 'dm';
+  type: "dm";
   username: string;
   userRole: string;
 }
@@ -207,26 +247,30 @@ export interface DMTypingEvent {
 // DM-related functions
 export function sendDM(
   recipientId: number,
-  content: string
+  content: string,
 ): Promise<{ success: boolean; message?: DMMessage; error?: string }> {
   return new Promise((resolve) => {
     if (!socket?.connected) {
-      resolve({ success: false, error: 'Not connected to server' });
+      resolve({ success: false, error: "Not connected to server" });
       return;
     }
 
-    socket.emit('send_dm', { recipientId, content }, (response: { success: boolean; message?: DMMessage; error?: string }) => {
-      resolve(response);
-    });
+    socket.emit(
+      "send_dm",
+      { recipientId, content },
+      (response: { success: boolean; message?: DMMessage; error?: string }) => {
+        resolve(response);
+      },
+    );
   });
 }
 
 export function emitDMTypingStart(recipientId: number): void {
-  socket?.emit('dm_typing_start', { recipientId });
+  socket?.emit("dm_typing_start", { recipientId });
 }
 
 export function emitDMTypingStop(recipientId: number): void {
-  socket?.emit('dm_typing_stop', { recipientId });
+  socket?.emit("dm_typing_stop", { recipientId });
 }
 
 // ==================== Voice Channel Types ====================
@@ -234,7 +278,7 @@ export function emitDMTypingStop(recipientId: number): void {
 export interface VoiceUser {
   userId: number;
   username: string;
-  role: 'dm' | 'player';
+  role: "dm" | "player";
   isMuted: boolean;
   isSpeaking: boolean;
 }
@@ -281,102 +325,140 @@ export interface VoiceSpeakingChangedEvent {
 // ==================== Voice Channel Functions ====================
 
 export function joinVoice(
-  roomId: number
-): Promise<{ success: boolean; roomId?: number; voiceUsers?: VoiceUser[]; error?: string }> {
+  roomId: number,
+): Promise<{
+  success: boolean;
+  roomId?: number;
+  voiceUsers?: VoiceUser[];
+  error?: string;
+}> {
   return new Promise((resolve) => {
     if (!socket?.connected) {
-      resolve({ success: false, error: 'Not connected to server' });
+      resolve({ success: false, error: "Not connected to server" });
       return;
     }
 
-    socket.emit('voice_join', { roomId }, (response: { success: boolean; roomId?: number; voiceUsers?: VoiceUser[]; error?: string }) => {
-      resolve(response);
-    });
+    socket.emit(
+      "voice_join",
+      { roomId },
+      (response: {
+        success: boolean;
+        roomId?: number;
+        voiceUsers?: VoiceUser[];
+        error?: string;
+      }) => {
+        resolve(response);
+      },
+    );
   });
 }
 
 export function leaveVoice(
-  roomId: number
+  roomId: number,
 ): Promise<{ success: boolean; error?: string }> {
   return new Promise((resolve) => {
     if (!socket?.connected) {
-      resolve({ success: false, error: 'Not connected to server' });
+      resolve({ success: false, error: "Not connected to server" });
       return;
     }
 
-    socket.emit('voice_leave', { roomId }, (response: { success: boolean; error?: string }) => {
-      resolve(response);
-    });
+    socket.emit(
+      "voice_leave",
+      { roomId },
+      (response: { success: boolean; error?: string }) => {
+        resolve(response);
+      },
+    );
   });
 }
 
 export function sendVoiceOffer(
   targetUserId: number,
-  offer: RTCSessionDescriptionInit
+  offer: RTCSessionDescriptionInit,
 ): Promise<{ success: boolean; error?: string }> {
   return new Promise((resolve) => {
     if (!socket?.connected) {
-      resolve({ success: false, error: 'Not connected to server' });
+      resolve({ success: false, error: "Not connected to server" });
       return;
     }
 
-    socket.emit('voice_offer', { targetUserId, offer }, (response: { success: boolean; error?: string }) => {
-      resolve(response);
-    });
+    socket.emit(
+      "voice_offer",
+      { targetUserId, offer },
+      (response: { success: boolean; error?: string }) => {
+        resolve(response);
+      },
+    );
   });
 }
 
 export function sendVoiceAnswer(
   targetUserId: number,
-  answer: RTCSessionDescriptionInit
+  answer: RTCSessionDescriptionInit,
 ): Promise<{ success: boolean; error?: string }> {
   return new Promise((resolve) => {
     if (!socket?.connected) {
-      resolve({ success: false, error: 'Not connected to server' });
+      resolve({ success: false, error: "Not connected to server" });
       return;
     }
 
-    socket.emit('voice_answer', { targetUserId, answer }, (response: { success: boolean; error?: string }) => {
-      resolve(response);
-    });
+    socket.emit(
+      "voice_answer",
+      { targetUserId, answer },
+      (response: { success: boolean; error?: string }) => {
+        resolve(response);
+      },
+    );
   });
 }
 
 export function sendVoiceIceCandidate(
   targetUserId: number,
-  candidate: RTCIceCandidateInit
+  candidate: RTCIceCandidateInit,
 ): Promise<{ success: boolean; error?: string }> {
   return new Promise((resolve) => {
     if (!socket?.connected) {
-      resolve({ success: false, error: 'Not connected to server' });
+      resolve({ success: false, error: "Not connected to server" });
       return;
     }
 
-    socket.emit('voice_ice_candidate', { targetUserId, candidate }, (response: { success: boolean; error?: string }) => {
-      resolve(response);
-    });
+    socket.emit(
+      "voice_ice_candidate",
+      { targetUserId, candidate },
+      (response: { success: boolean; error?: string }) => {
+        resolve(response);
+      },
+    );
   });
 }
 
 export function emitVoiceStateUpdate(roomId: number, isMuted: boolean): void {
-  socket?.emit('voice_state_update', { roomId, isMuted });
+  socket?.emit("voice_state_update", { roomId, isMuted });
 }
 
 export function emitVoiceSpeaking(roomId: number, isSpeaking: boolean): void {
-  socket?.emit('voice_speaking', { roomId, isSpeaking });
+  socket?.emit("voice_speaking", { roomId, isSpeaking });
 }
 
 export function getVoiceUsers(
-  roomId: number
+  roomId: number,
 ): Promise<{ success: boolean; voiceUsers?: VoiceUser[]; error?: string }> {
   return new Promise((resolve) => {
     if (!socket?.connected) {
-      resolve({ success: false, error: 'Not connected to server' });
+      resolve({ success: false, error: "Not connected to server" });
       return;
     }
 
-    socket.emit('voice_get_users', { roomId }, (response: { success: boolean; voiceUsers?: VoiceUser[]; error?: string }) => {
-      resolve(response);
-    });
+    socket.emit(
+      "voice_get_users",
+      { roomId },
+      (response: {
+        success: boolean;
+        voiceUsers?: VoiceUser[];
+        error?: string;
+      }) => {
+        resolve(response);
+      },
+    );
   });
 }

@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 import {
   type ChatMessage,
   type UserTypingEvent,
@@ -8,7 +8,7 @@ import {
   getMessages as socketGetMessages,
   emitTypingStart,
   emitTypingStop,
-} from '../lib/socket';
+} from "../lib/socket";
 
 interface ChatState {
   messages: ChatMessage[];
@@ -45,17 +45,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const socket = connectSocket();
 
-      socket.on('connect', () => {
+      socket.on("connect", () => {
         set({ isConnected: true, isConnecting: false });
         // Load message history when connected
         get().loadMessages(get().currentRoomId);
       });
 
-      socket.on('disconnect', () => {
+      socket.on("disconnect", () => {
         set({ isConnected: false, isConnecting: false });
       });
 
-      socket.on('connect_error', (error) => {
+      socket.on("connect_error", (error) => {
         set({
           isConnected: false,
           isConnecting: false,
@@ -63,7 +63,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
       });
 
-      socket.on('new_message', (message: ChatMessage) => {
+      socket.on("new_message", (message: ChatMessage) => {
         const currentRoomId = get().currentRoomId;
 
         // Only add message if it's for the current context
@@ -79,42 +79,48 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
       });
 
-      socket.on('user_typing', (data: UserTypingEvent & { roomId?: number | null }) => {
-        const currentRoomId = get().currentRoomId;
+      socket.on(
+        "user_typing",
+        (data: UserTypingEvent & { roomId?: number | null }) => {
+          const currentRoomId = get().currentRoomId;
 
-        // Only show typing for current context
-        const isForCurrentContext =
-          (currentRoomId === null && !data.roomId) ||
-          (currentRoomId !== null && data.roomId === currentRoomId);
+          // Only show typing for current context
+          const isForCurrentContext =
+            (currentRoomId === null && !data.roomId) ||
+            (currentRoomId !== null && data.roomId === currentRoomId);
 
-        if (isForCurrentContext) {
-          set((state) => {
-            const newTypingUsers = new Map(state.typingUsers);
-            newTypingUsers.set(data.userId, data.username);
-            return { typingUsers: newTypingUsers };
-          });
-        }
-      });
+          if (isForCurrentContext) {
+            set((state) => {
+              const newTypingUsers = new Map(state.typingUsers);
+              newTypingUsers.set(data.userId, data.username);
+              return { typingUsers: newTypingUsers };
+            });
+          }
+        },
+      );
 
-      socket.on('user_stopped_typing', (data: { userId: number; roomId?: number | null }) => {
-        const currentRoomId = get().currentRoomId;
+      socket.on(
+        "user_stopped_typing",
+        (data: { userId: number; roomId?: number | null }) => {
+          const currentRoomId = get().currentRoomId;
 
-        const isForCurrentContext =
-          (currentRoomId === null && !data.roomId) ||
-          (currentRoomId !== null && data.roomId === currentRoomId);
+          const isForCurrentContext =
+            (currentRoomId === null && !data.roomId) ||
+            (currentRoomId !== null && data.roomId === currentRoomId);
 
-        if (isForCurrentContext) {
-          set((state) => {
-            const newTypingUsers = new Map(state.typingUsers);
-            newTypingUsers.delete(data.userId);
-            return { typingUsers: newTypingUsers };
-          });
-        }
-      });
+          if (isForCurrentContext) {
+            set((state) => {
+              const newTypingUsers = new Map(state.typingUsers);
+              newTypingUsers.delete(data.userId);
+              return { typingUsers: newTypingUsers };
+            });
+          }
+        },
+      );
     } catch (error) {
       set({
         isConnecting: false,
-        error: error instanceof Error ? error.message : 'Failed to connect',
+        error: error instanceof Error ? error.message : "Failed to connect",
       });
     }
   },
@@ -134,12 +140,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (!trimmed) return false;
 
     const currentRoomId = get().currentRoomId;
-    const type = currentRoomId ? 'room' : 'global';
+    const type = currentRoomId ? "room" : "global";
 
-    const response = await socketSendMessage(trimmed, type, currentRoomId ?? undefined);
+    const response = await socketSendMessage(
+      trimmed,
+      type,
+      currentRoomId ?? undefined,
+    );
 
     if (!response.success) {
-      set({ error: response.error || 'Failed to send message' });
+      set({ error: response.error || "Failed to send message" });
       return false;
     }
 
@@ -149,9 +159,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loadMessages: async (roomId?: number | null) => {
     // Use provided roomId or current room
     const targetRoomId = roomId !== undefined ? roomId : get().currentRoomId;
-    const type = targetRoomId ? 'room' : 'global';
+    const type = targetRoomId ? "room" : "global";
 
-    const response = await socketGetMessages(type, targetRoomId ?? undefined, 50);
+    const response = await socketGetMessages(
+      type,
+      targetRoomId ?? undefined,
+      50,
+    );
 
     if (response.success && response.messages) {
       set({ messages: response.messages });
@@ -164,7 +178,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({
       currentRoomId: roomId,
       messages: [],
-      typingUsers: new Map()
+      typingUsers: new Map(),
     });
 
     // Load messages for the new room

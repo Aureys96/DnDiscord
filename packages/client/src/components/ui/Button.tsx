@@ -1,8 +1,8 @@
-import { type ButtonHTMLAttributes, forwardRef } from 'react';
-import { Loader2 } from 'lucide-react';
+import { type ButtonHTMLAttributes, forwardRef } from "react";
+import { Loader2 } from "lucide-react";
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
-type ButtonSize = 'sm' | 'md' | 'lg';
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -14,35 +14,35 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    'bg-violet-500 text-white hover:bg-violet-600 active:bg-violet-700 focus:ring-violet-500',
+    "bg-violet-500 text-white hover:bg-violet-600 active:bg-violet-700 focus:ring-violet-500",
   secondary:
-    'bg-gray-700 text-gray-50 hover:bg-gray-600 active:bg-gray-500 focus:ring-gray-500',
+    "bg-gray-700 text-gray-50 hover:bg-gray-600 active:bg-gray-500 focus:ring-gray-500",
   ghost:
-    'bg-transparent text-gray-300 hover:bg-gray-700 hover:text-gray-50 active:bg-gray-600 focus:ring-gray-500',
+    "bg-transparent text-gray-300 hover:bg-gray-700 hover:text-gray-50 active:bg-gray-600 focus:ring-gray-500",
   danger:
-    'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus:ring-red-500',
+    "bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus:ring-red-500",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'h-8 px-3 text-sm gap-1.5',
-  md: 'h-10 px-4 text-base gap-2',
-  lg: 'h-12 px-6 text-lg gap-2.5',
+  sm: "h-8 px-3 text-sm gap-1.5",
+  md: "h-10 px-4 text-base gap-2",
+  lg: "h-12 px-6 text-lg gap-2.5",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
-      variant = 'primary',
-      size = 'md',
+      variant = "primary",
+      size = "md",
       isLoading = false,
       leftIcon,
       rightIcon,
       disabled,
-      className = '',
+      className = "",
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     const isDisabled = disabled || isLoading;
 
@@ -61,16 +61,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         `}
         {...props}
       >
-        {isLoading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          leftIcon
-        )}
+        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : leftIcon}
         {children}
         {!isLoading && rightIcon}
       </button>
     );
-  }
+  },
 );
 
-Button.displayName = 'Button';
+Button.displayName = "Button";

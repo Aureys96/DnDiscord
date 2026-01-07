@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Hash, Plus, Trash2, Globe, Loader2, Crown } from 'lucide-react';
-import { useRoomStore } from '../../../stores/roomStore';
-import { useAuthStore } from '../../../stores/authStore';
-import { Button, Input } from '../../ui';
+import { useEffect, useState } from "react";
+import { Hash, Plus, Trash2, Globe, Loader2, Crown } from "lucide-react";
+import { useRoomStore } from "../../../stores/roomStore";
+import { useAuthStore } from "../../../stores/authStore";
+import { Button, Input } from "../../ui";
 
 interface RoomListProps {
   onRoomSelect: (roomId: number | null) => void;
@@ -24,10 +24,10 @@ export function RoomList({ onRoomSelect }: RoomListProps) {
   } = useRoomStore();
 
   const [isCreating, setIsCreating] = useState(false);
-  const [newRoomName, setNewRoomName] = useState('');
+  const [newRoomName, setNewRoomName] = useState("");
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const isDM = user?.role === 'dm';
+  const isDM = user?.role === "dm";
 
   // Fetch rooms on mount
   useEffect(() => {
@@ -36,7 +36,7 @@ export function RoomList({ onRoomSelect }: RoomListProps) {
 
   const handleCreateRoom = async () => {
     if (!newRoomName.trim()) {
-      setCreateError('Room name is required');
+      setCreateError("Room name is required");
       return;
     }
 
@@ -44,7 +44,7 @@ export function RoomList({ onRoomSelect }: RoomListProps) {
     const room = await createRoom(newRoomName.trim());
 
     if (room) {
-      setNewRoomName('');
+      setNewRoomName("");
       setIsCreating(false);
     }
   };
@@ -64,7 +64,7 @@ export function RoomList({ onRoomSelect }: RoomListProps) {
 
   const handleDeleteRoom = async (roomId: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this room?')) {
+    if (confirm("Are you sure you want to delete this room?")) {
       await deleteRoom(roomId);
     }
   };
@@ -95,8 +95,8 @@ export function RoomList({ onRoomSelect }: RoomListProps) {
           onClick={() => handleRoomClick(null)}
           className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
             currentRoomId === null
-              ? 'bg-gray-700 text-gray-100'
-              : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700/50'
+              ? "bg-gray-700 text-gray-100"
+              : "text-gray-400 hover:text-gray-100 hover:bg-gray-700/50"
           }`}
         >
           <Globe className="w-4 h-4 flex-shrink-0" />
@@ -117,8 +117,8 @@ export function RoomList({ onRoomSelect }: RoomListProps) {
             onClick={() => handleRoomClick(room.id)}
             className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors group ${
               currentRoomId === room.id
-                ? 'bg-gray-700 text-gray-100'
-                : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700/50'
+                ? "bg-gray-700 text-gray-100"
+                : "text-gray-400 hover:text-gray-100 hover:bg-gray-700/50"
             }`}
           >
             <Hash className="w-4 h-4 flex-shrink-0" />
@@ -148,10 +148,10 @@ export function RoomList({ onRoomSelect }: RoomListProps) {
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleCreateRoom();
-                  if (e.key === 'Escape') {
+                  if (e.key === "Enter") handleCreateRoom();
+                  if (e.key === "Escape") {
                     setIsCreating(false);
-                    setNewRoomName('');
+                    setNewRoomName("");
                     setCreateError(null);
                   }
                 }}
@@ -173,7 +173,7 @@ export function RoomList({ onRoomSelect }: RoomListProps) {
                   variant="secondary"
                   onClick={() => {
                     setIsCreating(false);
-                    setNewRoomName('');
+                    setNewRoomName("");
                     setCreateError(null);
                   }}
                 >

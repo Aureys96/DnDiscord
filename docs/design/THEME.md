@@ -3,6 +3,7 @@
 ## Color Philosophy
 
 We use a dark theme as the primary (and initially only) theme. Dark themes:
+
 - Reduce eye strain during long DnD sessions (4+ hours)
 - Create immersive atmosphere
 - Are expected by Discord users
@@ -131,33 +132,33 @@ module.exports = {
 /* Root theme variables */
 :root {
   /* Backgrounds */
-  --bg-primary: theme('colors.gray.900');
-  --bg-secondary: theme('colors.gray.800');
-  --bg-tertiary: theme('colors.gray.700');
-  --bg-quaternary: theme('colors.gray.600');
+  --bg-primary: theme("colors.gray.900");
+  --bg-secondary: theme("colors.gray.800");
+  --bg-tertiary: theme("colors.gray.700");
+  --bg-quaternary: theme("colors.gray.600");
 
   /* Text */
-  --text-primary: theme('colors.gray.50');
-  --text-secondary: theme('colors.gray.300');
-  --text-muted: theme('colors.gray.400');
+  --text-primary: theme("colors.gray.50");
+  --text-secondary: theme("colors.gray.300");
+  --text-muted: theme("colors.gray.400");
 
   /* Accent */
-  --accent: theme('colors.violet.500');
-  --accent-hover: theme('colors.violet.600');
+  --accent: theme("colors.violet.500");
+  --accent-hover: theme("colors.violet.600");
 
   /* Status */
-  --status-online: theme('colors.emerald.500');
-  --status-idle: theme('colors.amber.500');
-  --status-offline: theme('colors.gray.500');
-  --status-dnd: theme('colors.red.500');
+  --status-online: theme("colors.emerald.500");
+  --status-idle: theme("colors.amber.500");
+  --status-offline: theme("colors.gray.500");
+  --status-dnd: theme("colors.red.500");
 
   /* Voice */
-  --voice-speaking: theme('colors.green.500');
-  --voice-muted: theme('colors.red.500');
+  --voice-speaking: theme("colors.green.500");
+  --voice-muted: theme("colors.red.500");
 
   /* Roles */
-  --role-dm: theme('colors.amber.500');
-  --role-player: theme('colors.violet.500');
+  --role-dm: theme("colors.amber.500");
+  --role-player: theme("colors.violet.500");
 
   /* Spacing (consistent with Tailwind) */
   --sidebar-width: 240px;
@@ -253,6 +254,7 @@ xl:   64px   Room icons, large profiles
 ## Dark Theme Only (For Now)
 
 We start with dark theme only because:
+
 1. DnD sessions often happen in evening
 2. Discord users expect dark theme
 3. Simpler to implement one theme well

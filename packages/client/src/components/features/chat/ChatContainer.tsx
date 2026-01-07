@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
-import { Loader2, AlertCircle, WifiOff, Hash, Globe } from 'lucide-react';
-import { useChatStore } from '../../../stores/chatStore';
-import { useRoomStore } from '../../../stores/roomStore';
-import { MessageList } from './MessageList';
-import { ChatInput } from './ChatInput';
-import { VoiceControls } from '../voice';
+import { useEffect } from "react";
+import { Loader2, AlertCircle, WifiOff, Hash, Globe } from "lucide-react";
+import { useChatStore } from "../../../stores/chatStore";
+import { useRoomStore } from "../../../stores/roomStore";
+import { MessageList } from "./MessageList";
+import { ChatInput } from "./ChatInput";
+import { VoiceControls } from "../voice";
 
 interface ChatContainerProps {
   roomId?: number | null;
@@ -28,7 +28,9 @@ export function ChatContainer({ roomId }: ChatContainerProps) {
   const { rooms } = useRoomStore();
 
   // Get current room info
-  const currentRoom = currentRoomId ? rooms.find((r) => r.id === currentRoomId) : null;
+  const currentRoom = currentRoomId
+    ? rooms.find((r) => r.id === currentRoomId)
+    : null;
 
   // Connect to socket when component mounts
   useEffect(() => {
@@ -139,7 +141,7 @@ export function ChatContainer({ roomId }: ChatContainerProps) {
         onSendMessage={sendMessage}
         onTypingChange={setTyping}
         disabled={!isConnected}
-        placeholder={isConnected ? 'Type a message...' : 'Connecting...'}
+        placeholder={isConnected ? "Type a message..." : "Connecting..."}
       />
     </div>
   );

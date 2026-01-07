@@ -1,19 +1,19 @@
-import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Dice6, Crown, User } from 'lucide-react';
-import { Button, Input, Card, CardContent } from '../components/ui';
-import { useAuthStore } from '../stores/authStore';
+import { useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Dice6, Crown, User } from "lucide-react";
+import { Button, Input, Card, CardContent } from "../components/ui";
+import { useAuthStore } from "../stores/authStore";
 
-type Role = 'dm' | 'player';
+type Role = "dm" | "player";
 
 export function RegisterPage() {
   const navigate = useNavigate();
   const { register, isLoading, error, clearError } = useAuthStore();
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<Role>('player');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<Role>("player");
   const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -23,25 +23,25 @@ export function RegisterPage() {
 
     // Client-side validation
     if (username.length < 3) {
-      setFormError('Username must be at least 3 characters');
+      setFormError("Username must be at least 3 characters");
       return;
     }
     if (username.length > 30) {
-      setFormError('Username must be at most 30 characters');
+      setFormError("Username must be at most 30 characters");
       return;
     }
     if (password.length < 6) {
-      setFormError('Password must be at least 6 characters');
+      setFormError("Password must be at least 6 characters");
       return;
     }
     if (password !== confirmPassword) {
-      setFormError('Passwords do not match');
+      setFormError("Passwords do not match");
       return;
     }
 
     try {
       await register(username, password, role);
-      navigate('/');
+      navigate("/");
     } catch {
       // Error is handled by the store
     }
@@ -112,26 +112,26 @@ export function RegisterPage() {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => setRole('player')}
+                  onClick={() => setRole("player")}
                   disabled={isLoading}
                   className={`
                     flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all
                     ${
-                      role === 'player'
-                        ? 'border-violet-500 bg-violet-500/10'
-                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                      role === "player"
+                        ? "border-violet-500 bg-violet-500/10"
+                        : "border-gray-700 bg-gray-800 hover:border-gray-600"
                     }
                     disabled:opacity-50 disabled:cursor-not-allowed
                   `}
                 >
                   <User
                     className={`w-6 h-6 ${
-                      role === 'player' ? 'text-violet-500' : 'text-gray-400'
+                      role === "player" ? "text-violet-500" : "text-gray-400"
                     }`}
                   />
                   <span
                     className={`text-sm font-medium ${
-                      role === 'player' ? 'text-violet-400' : 'text-gray-300'
+                      role === "player" ? "text-violet-400" : "text-gray-300"
                     }`}
                   >
                     Player
@@ -140,26 +140,26 @@ export function RegisterPage() {
 
                 <button
                   type="button"
-                  onClick={() => setRole('dm')}
+                  onClick={() => setRole("dm")}
                   disabled={isLoading}
                   className={`
                     flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all
                     ${
-                      role === 'dm'
-                        ? 'border-amber-500 bg-amber-500/10'
-                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                      role === "dm"
+                        ? "border-amber-500 bg-amber-500/10"
+                        : "border-gray-700 bg-gray-800 hover:border-gray-600"
                     }
                     disabled:opacity-50 disabled:cursor-not-allowed
                   `}
                 >
                   <Crown
                     className={`w-6 h-6 ${
-                      role === 'dm' ? 'text-amber-500' : 'text-gray-400'
+                      role === "dm" ? "text-amber-500" : "text-gray-400"
                     }`}
                   />
                   <span
                     className={`text-sm font-medium ${
-                      role === 'dm' ? 'text-amber-400' : 'text-gray-300'
+                      role === "dm" ? "text-amber-400" : "text-gray-300"
                     }`}
                   >
                     Dungeon Master
@@ -180,7 +180,7 @@ export function RegisterPage() {
 
           {/* Login Link */}
           <div className="mt-6 text-center text-sm text-gray-400">
-            Already have an account?{' '}
+            Already have an account?{" "}
             <Link
               to="/login"
               className="text-violet-400 hover:text-violet-300 font-medium transition-colors"

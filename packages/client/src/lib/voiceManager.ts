@@ -20,15 +20,15 @@ import {
   type VoiceOfferEvent,
   type VoiceAnswerEvent,
   type VoiceIceCandidateEvent,
-} from './socket';
-import { useVoiceStore } from '../stores/voiceStore';
+} from "./socket";
+import { useVoiceStore } from "../stores/voiceStore";
 
 // WebRTC configuration with Google STUN servers
 const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
   ],
 };
 
@@ -46,7 +46,7 @@ const AUDIO_CONSTRAINTS: MediaStreamConstraints = {
 const VAD_THRESHOLD = 15;
 const VAD_CHECK_INTERVAL = 100; // ms
 
-export type VoiceMode = 'always-on' | 'ptt';
+export type VoiceMode = "always-on" | "ptt";
 
 export interface VoiceSettings {
   mode: VoiceMode;
@@ -63,8 +63,8 @@ class VoiceManager {
   private isSpeaking = false;
   private currentRoomId: number | null = null;
   private settings: VoiceSettings = {
-    mode: 'always-on',
-    pttKey: 'Space',
+    mode: "always-on",
+    pttKey: "Space",
   };
   private isPttActive = false;
 
@@ -74,8 +74,9 @@ class VoiceManager {
   async initialize(): Promise<void> {
     try {
       // Request microphone permission and get local stream
-      this.localStream = await navigator.mediaDevices.getUserMedia(AUDIO_CONSTRAINTS);
-      console.log('✓ Microphone access granted');
+      this.localStream =
+        await navigator.mediaDevices.getUserMedia(AUDIO_CONSTRAINTS);
+      console.log("✓ Microphone access granted");
 
       // Setup voice activity detection
       this.setupVoiceActivityDetection();
@@ -86,8 +87,8 @@ class VoiceManager {
       // Setup socket event listeners for WebRTC signaling
       this.setupSignalingListeners();
     } catch (error) {
-      console.error('Failed to access microphone:', error);
-      throw new Error('Microphone access denied');
+      console.error("Failed to access microphone:", error);
+      throw new Error("Microphone access denied");
     }
   }
 
@@ -133,7 +134,7 @@ class VoiceManager {
     this.removeSignalingListeners();
 
     this.currentRoomId = null;
-    console.log('✓ Voice manager cleaned up');
+    console.log("✓ Voice manager cleaned up");
   }
 
   /**
@@ -168,14 +169,17 @@ class VoiceManager {
       console.log(`✓ Sent offer to user ${targetUserId}`);
     } catch (error) {
       console.error(`Failed to create offer for user ${targetUserId}:`, error);
-      useVoiceStore.getState().setConnectionState(targetUserId, 'failed');
+      useVoiceStore.getState().setConnectionState(targetUserId, "failed");
     }
   }
 
   /**
    * Handle incoming offer from another user
    */
-  async handleOffer(fromUserId: number, offer: RTCSessionDescriptionInit): Promise<void> {
+  async handleOffer(
+    fromUserId: number,
+    offer: RTCSessionDescriptionInit,
+  ): Promise<void> {
     console.log(`Received offer from user ${fromUserId}`);
 
     const pc = this.createPeerConnection(fromUserId);
@@ -190,14 +194,17 @@ class VoiceManager {
       console.log(`✓ Sent answer to user ${fromUserId}`);
     } catch (error) {
       console.error(`Failed to handle offer from user ${fromUserId}:`, error);
-      useVoiceStore.getState().setConnectionState(fromUserId, 'failed');
+      useVoiceStore.getState().setConnectionState(fromUserId, "failed");
     }
   }
 
   /**
    * Handle incoming answer from another user
    */
-  async handleAnswer(fromUserId: number, answer: RTCSessionDescriptionInit): Promise<void> {
+  async handleAnswer(
+    fromUserId: number,
+    answer: RTCSessionDescriptionInit,
+  ): Promise<void> {
     console.log(`Received answer from user ${fromUserId}`);
 
     const pc = this.peerConnections.get(fromUserId);
@@ -210,14 +217,20 @@ class VoiceManager {
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
       console.log(`✓ Set remote description for user ${fromUserId}`);
     } catch (error) {
-      console.error(`Failed to set remote description for user ${fromUserId}:`, error);
+      console.error(
+        `Failed to set remote description for user ${fromUserId}:`,
+        error,
+      );
     }
   }
 
   /**
    * Handle incoming ICE candidate from another user
    */
-  async handleIceCandidate(fromUserId: number, candidate: RTCIceCandidateInit): Promise<void> {
+  async handleIceCandidate(
+    fromUserId: number,
+    candidate: RTCIceCandidateInit,
+  ): Promise<void> {
     const pc = this.peerConnections.get(fromUserId);
     if (!pc) {
       console.error(`No peer connection for user ${fromUserId}`);
@@ -227,7 +240,10 @@ class VoiceManager {
     try {
       await pc.addIceCandidate(new RTCIceCandidate(candidate));
     } catch (error) {
-      console.error(`Failed to add ICE candidate from user ${fromUserId}:`, error);
+      console.error(
+        `Failed to add ICE candidate from user ${fromUserId}:`,
+        error,
+      );
     }
   }
 
@@ -278,7 +294,7 @@ class VoiceManager {
     this.settings = { ...this.settings, ...settings };
 
     // If switching to PTT mode, mute by default
-    if (settings.mode === 'ptt' && !this.isPttActive) {
+    if (settings.mode === "ptt" && !this.isPttActive) {
       this.setMuted(true);
       useVoiceStore.getState().setMuted(true);
     }
@@ -307,7 +323,7 @@ class VoiceManager {
     this.peerConnections.set(userId, pc);
 
     // Update connection state
-    useVoiceStore.getState().setConnectionState(userId, 'connecting');
+    useVoiceStore.getState().setConnectionState(userId, "connecting");
 
     // Add local stream tracks to connection
     if (this.localStream) {
@@ -325,18 +341,20 @@ class VoiceManager {
 
     // Handle connection state changes
     pc.onconnectionstatechange = () => {
-      console.log(`Connection state with user ${userId}: ${pc.connectionState}`);
+      console.log(
+        `Connection state with user ${userId}: ${pc.connectionState}`,
+      );
 
       switch (pc.connectionState) {
-        case 'connected':
-          useVoiceStore.getState().setConnectionState(userId, 'connected');
+        case "connected":
+          useVoiceStore.getState().setConnectionState(userId, "connected");
           break;
-        case 'disconnected':
-        case 'closed':
-          useVoiceStore.getState().setConnectionState(userId, 'disconnected');
+        case "disconnected":
+        case "closed":
+          useVoiceStore.getState().setConnectionState(userId, "disconnected");
           break;
-        case 'failed':
-          useVoiceStore.getState().setConnectionState(userId, 'failed');
+        case "failed":
+          useVoiceStore.getState().setConnectionState(userId, "failed");
           break;
       }
     };
@@ -383,7 +401,9 @@ class VoiceManager {
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 256;
 
-      const source = this.audioContext.createMediaStreamSource(this.localStream);
+      const source = this.audioContext.createMediaStreamSource(
+        this.localStream,
+      );
       source.connect(this.analyser);
 
       const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
@@ -401,7 +421,7 @@ class VoiceManager {
         }
       }, VAD_CHECK_INTERVAL);
     } catch (error) {
-      console.error('Failed to setup voice activity detection:', error);
+      console.error("Failed to setup voice activity detection:", error);
     }
   }
 
@@ -409,20 +429,20 @@ class VoiceManager {
    * Setup PTT keyboard listeners
    */
   private setupPTTListeners(): void {
-    window.addEventListener('keydown', this.handleKeyDown);
-    window.addEventListener('keyup', this.handleKeyUp);
+    window.addEventListener("keydown", this.handleKeyDown);
+    window.addEventListener("keyup", this.handleKeyUp);
   }
 
   /**
    * Remove PTT keyboard listeners
    */
   private removePTTListeners(): void {
-    window.removeEventListener('keydown', this.handleKeyDown);
-    window.removeEventListener('keyup', this.handleKeyUp);
+    window.removeEventListener("keydown", this.handleKeyDown);
+    window.removeEventListener("keyup", this.handleKeyUp);
   }
 
   private handleKeyDown = (e: KeyboardEvent): void => {
-    if (this.settings.mode !== 'ptt') return;
+    if (this.settings.mode !== "ptt") return;
     if (e.code !== this.settings.pttKey) return;
     if (e.repeat) return; // Ignore key repeat
 
@@ -432,7 +452,7 @@ class VoiceManager {
   };
 
   private handleKeyUp = (e: KeyboardEvent): void => {
-    if (this.settings.mode !== 'ptt') return;
+    if (this.settings.mode !== "ptt") return;
     if (e.code !== this.settings.pttKey) return;
 
     this.isPttActive = false;
@@ -447,15 +467,15 @@ class VoiceManager {
     const socket = getSocket();
     if (!socket) return;
 
-    socket.on('voice_offer', (event: VoiceOfferEvent) => {
+    socket.on("voice_offer", (event: VoiceOfferEvent) => {
       this.handleOffer(event.fromUserId, event.offer);
     });
 
-    socket.on('voice_answer', (event: VoiceAnswerEvent) => {
+    socket.on("voice_answer", (event: VoiceAnswerEvent) => {
       this.handleAnswer(event.fromUserId, event.answer);
     });
 
-    socket.on('voice_ice_candidate', (event: VoiceIceCandidateEvent) => {
+    socket.on("voice_ice_candidate", (event: VoiceIceCandidateEvent) => {
       this.handleIceCandidate(event.fromUserId, event.candidate);
     });
   }
@@ -467,9 +487,9 @@ class VoiceManager {
     const socket = getSocket();
     if (!socket) return;
 
-    socket.off('voice_offer');
-    socket.off('voice_answer');
-    socket.off('voice_ice_candidate');
+    socket.off("voice_offer");
+    socket.off("voice_answer");
+    socket.off("voice_ice_candidate");
   }
 }
 

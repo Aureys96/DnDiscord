@@ -1,15 +1,15 @@
-import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Dice6 } from 'lucide-react';
-import { Button, Input, Card, CardContent } from '../components/ui';
-import { useAuthStore } from '../stores/authStore';
+import { useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Dice6 } from "lucide-react";
+import { Button, Input, Card, CardContent } from "../components/ui";
+import { useAuthStore } from "../stores/authStore";
 
 export function LoginPage() {
   const navigate = useNavigate();
   const { login, isLoading, error, clearError } = useAuthStore();
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -19,17 +19,17 @@ export function LoginPage() {
 
     // Client-side validation
     if (username.length < 3) {
-      setFormError('Username must be at least 3 characters');
+      setFormError("Username must be at least 3 characters");
       return;
     }
     if (password.length < 6) {
-      setFormError('Password must be at least 6 characters');
+      setFormError("Password must be at least 6 characters");
       return;
     }
 
     try {
       await login(username, password);
-      navigate('/');
+      navigate("/");
     } catch {
       // Error is handled by the store
     }
@@ -94,7 +94,7 @@ export function LoginPage() {
 
           {/* Register Link */}
           <div className="mt-6 text-center text-sm text-gray-400">
-            Don't have an account?{' '}
+            Don't have an account?{" "}
             <Link
               to="/register"
               className="text-violet-400 hover:text-violet-300 font-medium transition-colors"

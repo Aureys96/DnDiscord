@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 import {
   getSocket,
   joinVoice,
@@ -11,9 +11,13 @@ import {
   type VoiceUserLeftEvent,
   type VoiceStateChangedEvent,
   type VoiceSpeakingChangedEvent,
-} from '../lib/socket';
+} from "../lib/socket";
 
-export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'failed';
+export type ConnectionState =
+  | "disconnected"
+  | "connecting"
+  | "connected"
+  | "failed";
 
 export interface VoiceState {
   // State
@@ -55,8 +59,8 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
     const response = await joinVoice(roomId);
 
     if (!response.success) {
-      set({ error: response.error || 'Failed to join voice channel' });
-      throw new Error(response.error || 'Failed to join voice channel');
+      set({ error: response.error || "Failed to join voice channel" });
+      throw new Error(response.error || "Failed to join voice channel");
     }
 
     // Add existing voice users to state
@@ -194,7 +198,7 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
     if (!socket) return;
 
     // User joined voice
-    socket.on('voice_user_joined', (event: VoiceUserJoinedEvent) => {
+    socket.on("voice_user_joined", (event: VoiceUserJoinedEvent) => {
       const { currentRoomId } = get();
       if (event.roomId === currentRoomId) {
         get().addVoiceUser(event.user);
@@ -202,21 +206,21 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
     });
 
     // User left voice
-    socket.on('voice_user_left', (event: VoiceUserLeftEvent) => {
+    socket.on("voice_user_left", (event: VoiceUserLeftEvent) => {
       const { currentRoomId, isInVoice } = get();
       if (event.roomId === currentRoomId) {
         get().removeVoiceUser(event.userId);
 
         // If this is the current user being kicked (e.g., room switch auto-leave)
         if (event.userId === currentUserId && isInVoice) {
-          console.log('✗ Auto-left voice channel (server-side)');
+          console.log("✗ Auto-left voice channel (server-side)");
           get().clearVoiceState();
         }
       }
     });
 
     // User mute state changed
-    socket.on('voice_state_changed', (event: VoiceStateChangedEvent) => {
+    socket.on("voice_state_changed", (event: VoiceStateChangedEvent) => {
       const { currentRoomId } = get();
       if (event.roomId === currentRoomId) {
         get().updateUserState(event.userId, { isMuted: event.isMuted });
@@ -224,7 +228,7 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
     });
 
     // User speaking state changed
-    socket.on('voice_speaking_changed', (event: VoiceSpeakingChangedEvent) => {
+    socket.on("voice_speaking_changed", (event: VoiceSpeakingChangedEvent) => {
       const { currentRoomId } = get();
       if (event.roomId === currentRoomId) {
         get().updateUserState(event.userId, { isSpeaking: event.isSpeaking });
@@ -237,10 +241,10 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
     const socket = getSocket();
     if (!socket) return;
 
-    socket.off('voice_user_joined');
-    socket.off('voice_user_left');
-    socket.off('voice_state_changed');
-    socket.off('voice_speaking_changed');
+    socket.off("voice_user_joined");
+    socket.off("voice_user_left");
+    socket.off("voice_state_changed");
+    socket.off("voice_speaking_changed");
   },
 
   // Handle room change - cleanup voice if switching rooms
@@ -250,7 +254,9 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
     // If in voice and switching to a different room, clear voice state
     // The server will handle the actual voice_leave, we just need to clean up client state
     if (isInVoice && currentRoomId !== null && currentRoomId !== newRoomId) {
-      console.log(`Room changed from ${currentRoomId} to ${newRoomId}, voice will be auto-left by server`);
+      console.log(
+        `Room changed from ${currentRoomId} to ${newRoomId}, voice will be auto-left by server`,
+      );
       // Note: We don't need to call leaveVoiceChannel here because
       // the server auto-leaves voice when switching rooms and sends voice_user_left event
       // The socket listener will call clearVoiceState when it receives that event

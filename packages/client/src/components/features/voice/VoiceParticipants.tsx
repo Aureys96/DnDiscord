@@ -1,6 +1,9 @@
-import { Crown, User, Mic, MicOff, Wifi, WifiOff, Loader2 } from 'lucide-react';
-import { useVoiceStore, type ConnectionState } from '../../../stores/voiceStore';
-import type { VoiceUser } from '../../../lib/socket';
+import { Crown, User, Mic, MicOff, Wifi, WifiOff, Loader2 } from "lucide-react";
+import {
+  useVoiceStore,
+  type ConnectionState,
+} from "../../../stores/voiceStore";
+import type { VoiceUser } from "../../../lib/socket";
 
 interface VoiceParticipantProps {
   user: VoiceUser;
@@ -8,25 +11,27 @@ interface VoiceParticipantProps {
 }
 
 function VoiceParticipant({ user, connectionState }: VoiceParticipantProps) {
-  const isDM = user.role === 'dm';
+  const isDM = user.role === "dm";
 
   return (
     <div
       className={`flex items-center gap-2 p-2 rounded-lg transition-all ${
         user.isSpeaking
-          ? 'bg-emerald-500/20 ring-2 ring-emerald-500/50'
-          : 'bg-gray-800/50'
+          ? "bg-emerald-500/20 ring-2 ring-emerald-500/50"
+          : "bg-gray-800/50"
       }`}
     >
       {/* Avatar with speaking indicator */}
       <div className="relative">
         <div
           className={`w-8 h-8 rounded-full flex items-center justify-center ${
-            isDM ? 'bg-amber-500/20' : 'bg-violet-500/20'
-          } ${user.isSpeaking ? 'animate-pulse' : ''}`}
+            isDM ? "bg-amber-500/20" : "bg-violet-500/20"
+          } ${user.isSpeaking ? "animate-pulse" : ""}`}
         >
           {isDM ? (
-            <Crown className={`w-4 h-4 ${isDM ? 'text-amber-500' : 'text-violet-500'}`} />
+            <Crown
+              className={`w-4 h-4 ${isDM ? "text-amber-500" : "text-violet-500"}`}
+            />
           ) : (
             <User className="w-4 h-4 text-violet-500" />
           )}
@@ -41,7 +46,7 @@ function VoiceParticipant({ user, connectionState }: VoiceParticipantProps) {
       {/* Username */}
       <span
         className={`text-sm flex-1 truncate ${
-          isDM ? 'text-amber-400' : 'text-gray-200'
+          isDM ? "text-amber-400" : "text-gray-200"
         }`}
       >
         {user.username}
@@ -50,11 +55,11 @@ function VoiceParticipant({ user, connectionState }: VoiceParticipantProps) {
       {/* Connection/Mute Status */}
       <div className="flex items-center gap-1">
         {/* Connection state indicator */}
-        {connectionState && connectionState !== 'connected' && (
+        {connectionState && connectionState !== "connected" && (
           <span title={`Connection: ${connectionState}`}>
-            {connectionState === 'connecting' ? (
+            {connectionState === "connecting" ? (
               <Loader2 className="w-3 h-3 text-yellow-400 animate-spin" />
-            ) : connectionState === 'failed' ? (
+            ) : connectionState === "failed" ? (
               <WifiOff className="w-3 h-3 text-red-400" />
             ) : (
               <Wifi className="w-3 h-3 text-gray-500" />
@@ -66,7 +71,9 @@ function VoiceParticipant({ user, connectionState }: VoiceParticipantProps) {
         {user.isMuted ? (
           <MicOff className="w-4 h-4 text-red-400" />
         ) : (
-          <Mic className={`w-4 h-4 ${user.isSpeaking ? 'text-emerald-400' : 'text-gray-500'}`} />
+          <Mic
+            className={`w-4 h-4 ${user.isSpeaking ? "text-emerald-400" : "text-gray-500"}`}
+          />
         )}
       </div>
     </div>
@@ -94,11 +101,11 @@ export function VoiceParticipants({ compact = false }: VoiceParticipantsProps) {
           <div
             key={user.userId}
             className={`w-7 h-7 rounded-full flex items-center justify-center border-2 border-gray-900 ${
-              user.role === 'dm' ? 'bg-amber-500/20' : 'bg-violet-500/20'
-            } ${user.isSpeaking ? 'ring-2 ring-emerald-500' : ''}`}
-            title={`${user.username}${user.isMuted ? ' (muted)' : ''}${user.isSpeaking ? ' (speaking)' : ''}`}
+              user.role === "dm" ? "bg-amber-500/20" : "bg-violet-500/20"
+            } ${user.isSpeaking ? "ring-2 ring-emerald-500" : ""}`}
+            title={`${user.username}${user.isMuted ? " (muted)" : ""}${user.isSpeaking ? " (speaking)" : ""}`}
           >
-            {user.role === 'dm' ? (
+            {user.role === "dm" ? (
               <Crown className="w-3 h-3 text-amber-500" />
             ) : (
               <User className="w-3 h-3 text-violet-500" />

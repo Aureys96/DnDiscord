@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthStore } from './stores/authStore';
-import { ProtectedRoute } from './components/features/auth/ProtectedRoute';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { HomePage } from './pages/HomePage';
-import { Loader2 } from 'lucide-react';
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuthStore } from "./stores/authStore";
+import { ProtectedRoute } from "./components/features/auth/ProtectedRoute";
+import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
+import { HomePage } from "./pages/HomePage";
+import { Loader2 } from "lucide-react";
 
 function AppRoutes() {
   const { user, isInitialized, initialize } = useAuthStore();

@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+const API_BASE = "/api";
 
 interface ApiError {
   error: string;
@@ -14,14 +14,14 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
 
     if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+      headers["Authorization"] = `Bearer ${this.token}`;
     }
 
     // Merge with any headers from options
@@ -39,42 +39,42 @@ class ApiClient {
 
     if (!response.ok) {
       const error = data as ApiError;
-      throw new Error(error.error || 'An error occurred');
+      throw new Error(error.error || "An error occurred");
     }
 
     return data as T;
   }
 
   async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET' });
+    return this.request<T>(endpoint, { method: "GET" });
   }
 
   async post<T>(endpoint: string, body: unknown): Promise<T> {
     return this.request<T>(endpoint, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(body),
     });
   }
 
   async put<T>(endpoint: string, body: unknown): Promise<T> {
     return this.request<T>(endpoint, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(body),
     });
   }
 
   async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
+    return this.request<T>(endpoint, { method: "DELETE" });
   }
 
   // Raw fetch that returns Response object (for cases where you need to check response.ok)
   async fetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
 
     if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+      headers["Authorization"] = `Bearer ${this.token}`;
     }
 
     if (options.headers) {

@@ -6,7 +6,7 @@
 export interface VoiceUser {
   userId: number;
   username: string;
-  role: 'dm' | 'player';
+  role: "dm" | "player";
   isMuted: boolean;
   isSpeaking: boolean;
 }
@@ -26,7 +26,10 @@ export function getVoiceUsers(roomId: number): VoiceUser[] {
 /**
  * Get voice user by ID in a specific room
  */
-export function getVoiceUser(roomId: number, userId: number): VoiceUser | undefined {
+export function getVoiceUser(
+  roomId: number,
+  userId: number,
+): VoiceUser | undefined {
   return voiceUsers.get(roomId)?.get(userId);
 }
 
@@ -44,7 +47,7 @@ export function addUserToVoice(
   roomId: number,
   userId: number,
   username: string,
-  role: 'dm' | 'player'
+  role: "dm" | "player",
 ): VoiceUser {
   if (!voiceUsers.has(roomId)) {
     voiceUsers.set(roomId, new Map());
@@ -103,7 +106,11 @@ export function removeUserFromAllVoice(userId: number): number[] {
 /**
  * Update user's mute state
  */
-export function updateUserMuteState(roomId: number, userId: number, isMuted: boolean): boolean {
+export function updateUserMuteState(
+  roomId: number,
+  userId: number,
+  isMuted: boolean,
+): boolean {
   const user = voiceUsers.get(roomId)?.get(userId);
   if (!user) return false;
 
@@ -114,7 +121,11 @@ export function updateUserMuteState(roomId: number, userId: number, isMuted: boo
 /**
  * Update user's speaking state
  */
-export function updateUserSpeakingState(roomId: number, userId: number, isSpeaking: boolean): boolean {
+export function updateUserSpeakingState(
+  roomId: number,
+  userId: number,
+  isSpeaking: boolean,
+): boolean {
   const user = voiceUsers.get(roomId)?.get(userId);
   if (!user) return false;
 
