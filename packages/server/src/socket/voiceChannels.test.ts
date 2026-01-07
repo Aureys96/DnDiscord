@@ -10,6 +10,7 @@ import {
   updateUserSpeakingState,
   getVoiceUserCount,
   hasVoiceUsers,
+  getUserVoiceRoom,
   clearAllVoiceState,
 } from './voiceChannels.js';
 
@@ -323,6 +324,46 @@ describe('Voice Channels', () => {
       expect(hasVoiceUsers(100)).toBe(false);
       expect(hasVoiceUsers(200)).toBe(false);
       expect(hasVoiceUsers(300)).toBe(false);
+    });
+  });
+
+  describe('getUserVoiceRoom', () => {
+    it('should return null for user not in any voice channel', () => {
+      expect(getUserVoiceRoom(999)).toBeNull();
+    });
+
+    it('should return null after user leaves voice', () => {
+      addUserToVoice(100, 1, 'player1', 'player');
+      removeUserFromVoice(100, 1);
+
+      expect(getUserVoiceRoom(1)).toBeNull();
+    });
+
+    it('should return room ID when user is in voice', () => {
+      addUserToVoice(100, 1, 'player1', 'player');
+
+      expect(getUserVoiceRoom(1)).toBe(100);
+    });
+
+    it('should return correct room when user is in one of multiple rooms', () => {
+      addUserToVoice(100, 1, 'player1', 'player');
+      addUserToVoice(200, 2, 'player2', 'player');
+      addUserToVoice(300, 3, 'player3', 'player');
+
+      expect(getUserVoiceRoom(1)).toBe(100);
+      expect(getUserVoiceRoom(2)).toBe(200);
+      expect(getUserVoiceRoom(3)).toBe(300);
+    });
+
+    it('should return updated room after user moves to different room', () => {
+      addUserToVoice(100, 1, 'player1', 'player');
+      expect(getUserVoiceRoom(1)).toBe(100);
+
+      // Simulate room switch: leave old, join new
+      removeUserFromVoice(100, 1);
+      addUserToVoice(200, 1, 'player1', 'player');
+
+      expect(getUserVoiceRoom(1)).toBe(200);
     });
   });
 });

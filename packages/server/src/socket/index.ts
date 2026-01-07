@@ -11,6 +11,7 @@ import {
   updateUserMuteState,
   updateUserSpeakingState,
   isUserInVoice,
+  getUserVoiceRoom,
   type VoiceUser,
 } from './voiceChannels.js';
 
@@ -343,6 +344,21 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
         // Leave current room if in one
         const currentRoomId = userCurrentRoom.get(user.id);
         if (currentRoomId !== null && currentRoomId !== undefined) {
+          // Auto-leave voice if in voice channel in old room
+          const voiceRoomId = getUserVoiceRoom(user.id);
+          if (voiceRoomId !== null && voiceRoomId === currentRoomId) {
+            const removed = removeUserFromVoice(currentRoomId, user.id);
+            if (removed) {
+              // Notify others in old room that user left voice
+              io.to(`room:${currentRoomId}`).emit('voice_user_left', {
+                roomId: currentRoomId,
+                userId: user.id,
+                username: user.username,
+              });
+              console.log(`✗ ${user.username} auto-left voice in room ${currentRoomId} (switched rooms)`);
+            }
+          }
+
           authSocket.leave(`room:${currentRoomId}`);
 
           // Remove from room users tracking
@@ -398,6 +414,20 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
         const currentRoomId = userCurrentRoom.get(user.id);
 
         if (currentRoomId !== null && currentRoomId !== undefined) {
+          // Auto-leave voice if in voice channel
+          const voiceRoomId = getUserVoiceRoom(user.id);
+          if (voiceRoomId !== null && voiceRoomId === currentRoomId) {
+            const removed = removeUserFromVoice(currentRoomId, user.id);
+            if (removed) {
+              io.to(`room:${currentRoomId}`).emit('voice_user_left', {
+                roomId: currentRoomId,
+                userId: user.id,
+                username: user.username,
+              });
+              console.log(`✗ ${user.username} auto-left voice in room ${currentRoomId} (left room)`);
+            }
+          }
+
           authSocket.leave(`room:${currentRoomId}`);
 
           // Remove from room users tracking

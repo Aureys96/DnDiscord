@@ -137,6 +137,19 @@ export function hasVoiceUsers(roomId: number): boolean {
 }
 
 /**
+ * Get which room a user is in voice for (users can only be in one voice channel at a time)
+ * Returns null if user is not in any voice channel
+ */
+export function getUserVoiceRoom(userId: number): number | null {
+  for (const [roomId, users] of voiceUsers.entries()) {
+    if (users.has(userId)) {
+      return roomId;
+    }
+  }
+  return null;
+}
+
+/**
  * Clear all voice state (for testing only)
  */
 export function clearAllVoiceState(): void {

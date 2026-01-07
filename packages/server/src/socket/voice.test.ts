@@ -3,10 +3,13 @@ import { createServer, Server as HTTPServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
 import jwt from 'jsonwebtoken';
-import { clearAllVoiceState, getVoiceUsers, isUserInVoice } from './voiceChannels.js';
+import { clearAllVoiceState, getVoiceUsers, isUserInVoice, getUserVoiceRoom } from './voiceChannels.js';
 
 const JWT_SECRET = 'test-secret-key';
 const TEST_PORT = 3099;
+
+// Track user's current room for room switching tests
+const userCurrentRoom = new Map<number, number | null>();
 
 // Minimal Socket.IO setup for voice testing (no database needed)
 function setupTestSocketIO(httpServer: HTTPServer): SocketIOServer {
@@ -48,9 +51,62 @@ function setupTestSocketIO(httpServer: HTTPServer): SocketIOServer {
       removeUserFromAllVoice,
       getVoiceUsers,
       isUserInVoice,
+      getUserVoiceRoom,
       updateUserMuteState,
       updateUserSpeakingState,
     } = require('./voiceChannels.js');
+
+    // Join room event (for testing room switching)
+    socket.on('join_room', ({ roomId }: { roomId: number }, callback?: Function) => {
+      const currentRoomId = userCurrentRoom.get(user.id);
+
+      // Auto-leave voice if in voice channel in old room
+      if (currentRoomId !== null && currentRoomId !== undefined && currentRoomId !== roomId) {
+        const voiceRoomId = getUserVoiceRoom(user.id);
+        if (voiceRoomId !== null && voiceRoomId === currentRoomId) {
+          const removed = removeUserFromVoice(currentRoomId, user.id);
+          if (removed) {
+            socket.leave(`voice:${currentRoomId}`);
+            io.to(`voice:${currentRoomId}`).emit('voice_user_left', {
+              roomId: currentRoomId,
+              userId: user.id,
+              username: user.username,
+            });
+            // Also notify the user themselves
+            socket.emit('voice_user_left', {
+              roomId: currentRoomId,
+              userId: user.id,
+              username: user.username,
+            });
+          }
+        }
+        socket.leave(`room:${currentRoomId}`);
+      }
+
+      socket.join(`room:${roomId}`);
+      userCurrentRoom.set(user.id, roomId);
+      callback?.({ success: true });
+    });
+
+    // Leave room event
+    socket.on('leave_room', (callback?: Function) => {
+      const currentRoomId = userCurrentRoom.get(user.id);
+      if (currentRoomId !== null && currentRoomId !== undefined) {
+        // Auto-leave voice if in voice channel
+        const voiceRoomId = getUserVoiceRoom(user.id);
+        if (voiceRoomId !== null && voiceRoomId === currentRoomId) {
+          removeUserFromVoice(currentRoomId, user.id);
+          socket.leave(`voice:${currentRoomId}`);
+          io.to(`voice:${currentRoomId}`).emit('voice_user_left', {
+            roomId: currentRoomId,
+            userId: user.id,
+          });
+        }
+        socket.leave(`room:${currentRoomId}`);
+        userCurrentRoom.set(user.id, null);
+      }
+      callback?.({ success: true });
+    });
 
     // Voice join
     socket.on('voice_join', ({ roomId }: { roomId: number }) => {
@@ -208,6 +264,7 @@ describe('Voice Socket Events', () => {
   beforeEach(() => {
     // Clear voice state between tests
     clearAllVoiceState();
+    userCurrentRoom.clear();
 
     // Disconnect any connected clients
     if (clientSocket1?.connected) clientSocket1.disconnect();
@@ -580,6 +637,173 @@ describe('Voice Socket Events', () => {
       expect(leftEvent.userId).toBe(user1.userId);
       expect(getVoiceUsers(100).length).toBe(1);
       expect(isUserInVoice(100, user1.userId)).toBe(false);
+    });
+  });
+
+  describe('room audio isolation', () => {
+    it('should auto-leave voice when switching rooms', async () => {
+      clientSocket1 = await connectClient(createToken(user1));
+
+      // Join room 100
+      const joinRoomPromise = new Promise<void>((resolve) => {
+        clientSocket1.emit('join_room', { roomId: 100 }, () => resolve());
+      });
+      await joinRoomPromise;
+
+      // Join voice in room 100
+      const joinVoicePromise = waitForEvent(clientSocket1, 'voice_joined');
+      clientSocket1.emit('voice_join', { roomId: 100 });
+      await joinVoicePromise;
+
+      expect(isUserInVoice(100, user1.userId)).toBe(true);
+      expect(getUserVoiceRoom(user1.userId)).toBe(100);
+
+      // Listen for voice_user_left event when switching rooms
+      const voiceLeftPromise = waitForEvent<{ roomId: number; userId: number }>(
+        clientSocket1,
+        'voice_user_left'
+      );
+
+      // Switch to room 200
+      const switchRoomPromise = new Promise<void>((resolve) => {
+        clientSocket1.emit('join_room', { roomId: 200 }, () => resolve());
+      });
+      await switchRoomPromise;
+
+      // Should receive voice_user_left event
+      const leftEvent = await voiceLeftPromise;
+      expect(leftEvent.roomId).toBe(100);
+      expect(leftEvent.userId).toBe(user1.userId);
+
+      // Verify user is no longer in voice
+      expect(isUserInVoice(100, user1.userId)).toBe(false);
+      expect(getUserVoiceRoom(user1.userId)).toBeNull();
+    });
+
+    it('should notify other users when someone auto-leaves voice due to room switch', async () => {
+      clientSocket1 = await connectClient(createToken(user1));
+      clientSocket2 = await connectClient(createToken(user2));
+
+      // Both join room 100
+      await new Promise<void>((resolve) => {
+        clientSocket1.emit('join_room', { roomId: 100 }, () => resolve());
+      });
+      await new Promise<void>((resolve) => {
+        clientSocket2.emit('join_room', { roomId: 100 }, () => resolve());
+      });
+
+      // Both join voice in room 100
+      const join1Promise = waitForEvent(clientSocket1, 'voice_joined');
+      clientSocket1.emit('voice_join', { roomId: 100 });
+      await join1Promise;
+
+      const join2Promise = waitForEvent(clientSocket2, 'voice_joined');
+      clientSocket2.emit('voice_join', { roomId: 100 });
+      await join2Promise;
+
+      expect(getVoiceUsers(100).length).toBe(2);
+
+      // User2 listens for user1 leaving
+      const voiceLeftPromise = waitForEvent<{ roomId: number; userId: number }>(
+        clientSocket2,
+        'voice_user_left'
+      );
+
+      // User1 switches to room 200
+      await new Promise<void>((resolve) => {
+        clientSocket1.emit('join_room', { roomId: 200 }, () => resolve());
+      });
+
+      // User2 should receive notification that user1 left voice
+      const leftEvent = await voiceLeftPromise;
+      expect(leftEvent.roomId).toBe(100);
+      expect(leftEvent.userId).toBe(user1.userId);
+
+      // Only user2 should remain in voice
+      expect(getVoiceUsers(100).length).toBe(1);
+      expect(isUserInVoice(100, user2.userId)).toBe(true);
+      expect(isUserInVoice(100, user1.userId)).toBe(false);
+    });
+
+    it('should not affect voice when staying in same room', async () => {
+      clientSocket1 = await connectClient(createToken(user1));
+
+      // Join room 100
+      await new Promise<void>((resolve) => {
+        clientSocket1.emit('join_room', { roomId: 100 }, () => resolve());
+      });
+
+      // Join voice
+      const joinVoicePromise = waitForEvent(clientSocket1, 'voice_joined');
+      clientSocket1.emit('voice_join', { roomId: 100 });
+      await joinVoicePromise;
+
+      expect(isUserInVoice(100, user1.userId)).toBe(true);
+
+      // "Rejoin" same room (should not trigger voice leave)
+      await new Promise<void>((resolve) => {
+        clientSocket1.emit('join_room', { roomId: 100 }, () => resolve());
+      });
+
+      // Should still be in voice
+      expect(isUserInVoice(100, user1.userId)).toBe(true);
+      expect(getUserVoiceRoom(user1.userId)).toBe(100);
+    });
+
+    it('should auto-leave voice when leaving room entirely', async () => {
+      clientSocket1 = await connectClient(createToken(user1));
+
+      // Join room 100
+      await new Promise<void>((resolve) => {
+        clientSocket1.emit('join_room', { roomId: 100 }, () => resolve());
+      });
+
+      // Join voice
+      const joinVoicePromise = waitForEvent(clientSocket1, 'voice_joined');
+      clientSocket1.emit('voice_join', { roomId: 100 });
+      await joinVoicePromise;
+
+      expect(isUserInVoice(100, user1.userId)).toBe(true);
+
+      // Leave room entirely
+      await new Promise<void>((resolve) => {
+        clientSocket1.emit('leave_room', () => resolve());
+      });
+
+      // Should no longer be in voice
+      expect(isUserInVoice(100, user1.userId)).toBe(false);
+      expect(getUserVoiceRoom(user1.userId)).toBeNull();
+    });
+
+    it('should keep voice users isolated between rooms', async () => {
+      clientSocket1 = await connectClient(createToken(user1));
+      clientSocket2 = await connectClient(createToken(user2));
+
+      // User1 joins room 100 and voice
+      await new Promise<void>((resolve) => {
+        clientSocket1.emit('join_room', { roomId: 100 }, () => resolve());
+      });
+      const join1Promise = waitForEvent(clientSocket1, 'voice_joined');
+      clientSocket1.emit('voice_join', { roomId: 100 });
+      await join1Promise;
+
+      // User2 joins room 200 and voice
+      await new Promise<void>((resolve) => {
+        clientSocket2.emit('join_room', { roomId: 200 }, () => resolve());
+      });
+      const join2Promise = waitForEvent(clientSocket2, 'voice_joined');
+      clientSocket2.emit('voice_join', { roomId: 200 });
+      await join2Promise;
+
+      // Verify voice isolation
+      expect(getUserVoiceRoom(user1.userId)).toBe(100);
+      expect(getUserVoiceRoom(user2.userId)).toBe(200);
+      expect(getVoiceUsers(100).length).toBe(1);
+      expect(getVoiceUsers(200).length).toBe(1);
+      expect(isUserInVoice(100, user1.userId)).toBe(true);
+      expect(isUserInVoice(100, user2.userId)).toBe(false);
+      expect(isUserInVoice(200, user1.userId)).toBe(false);
+      expect(isUserInVoice(200, user2.userId)).toBe(true);
     });
   });
 });

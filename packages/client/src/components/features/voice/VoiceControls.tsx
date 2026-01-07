@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Mic, MicOff, PhoneOff, Phone, Settings } from 'lucide-react';
 import { useVoiceStore } from '../../../stores/voiceStore';
+import { useAuthStore } from '../../../stores/authStore';
 import { voiceManager, type VoiceMode } from '../../../lib/voiceManager';
 import { Button } from '../../ui/Button';
 
@@ -9,9 +10,11 @@ interface VoiceControlsProps {
 }
 
 export function VoiceControls({ roomId }: VoiceControlsProps) {
+  const { user } = useAuthStore();
   const {
     isInVoice,
     isMuted,
+    currentRoomId,
     joinVoiceChannel,
     leaveVoiceChannel,
     toggleMute,
@@ -23,16 +26,30 @@ export function VoiceControls({ roomId }: VoiceControlsProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [voiceMode, setVoiceMode] = useState<VoiceMode>('always-on');
+  const wasInVoice = useRef(false);
+
+  // Cleanup voiceManager when auto-kicked from voice (e.g., room switch)
+  useEffect(() => {
+    if (wasInVoice.current && !isInVoice) {
+      // User was in voice but no longer - cleanup voiceManager
+      console.log('✗ Voice state cleared, cleaning up voiceManager');
+      voiceManager.cleanup();
+      cleanupSocketListeners();
+    }
+    wasInVoice.current = isInVoice;
+  }, [isInVoice, cleanupSocketListeners]);
 
   const handleJoinVoice = useCallback(async () => {
+    if (!user) return;
+
     setIsConnecting(true);
     try {
       // Initialize voice manager
       await voiceManager.initialize();
       voiceManager.setRoom(roomId);
 
-      // Setup socket listeners
-      setupSocketListeners();
+      // Setup socket listeners with current user ID
+      setupSocketListeners(user.id);
 
       // Join voice channel and get existing users
       const existingUsers = await joinVoiceChannel(roomId);
@@ -48,7 +65,7 @@ export function VoiceControls({ roomId }: VoiceControlsProps) {
     } finally {
       setIsConnecting(false);
     }
-  }, [roomId, joinVoiceChannel, setupSocketListeners]);
+  }, [roomId, user, joinVoiceChannel, setupSocketListeners]);
 
   const handleLeaveVoice = useCallback(async () => {
     try {
