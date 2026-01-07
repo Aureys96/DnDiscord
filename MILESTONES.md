@@ -472,22 +472,39 @@ packages/client/src/
 
 ---
 
-## Upcoming Milestones
+### ✅ Milestone 11: Room Audio Isolation
+**Status:** COMPLETED
+**Completed:** 2026-01-07
 
-### Milestone 11: Room Audio Isolation
-**Status:** PLANNED
-
-**Goals:**
-- Separate voice channels per room
-- Automatic voice channel switching
-- Prevent audio bleed between rooms
-
-**Deliverables:**
-- Room-based peer connection management
-- Voice channel switching logic
+**Implemented:**
+- Separate voice channels per room - users in Room A cannot hear users in Room B
+- Automatic voice leave on room switch - when user joins a different room, they auto-leave voice
+- Automatic voice leave when leaving room entirely
 - Proper connection cleanup on room change
 
+**Backend:**
+- Added `getUserVoiceRoom(userId)` function to track which room user is in voice for
+- Updated `join_room` event to auto-leave voice when switching rooms
+- Updated `leave_room` event to auto-leave voice when leaving room
+- Voice state properly cleaned up with notifications to other users
+
+**Frontend:**
+- Updated `voiceStore` with `handleRoomChange` action
+- Updated socket listeners to detect when current user is auto-kicked from voice
+- Updated `VoiceControls` to cleanup `voiceManager` when voice state is cleared
+- Added `useEffect` to detect voice state changes and cleanup peer connections
+
+**Tests:**
+- 5 new unit tests for `getUserVoiceRoom`
+- 5 new integration tests for room audio isolation
+- **159 tests passing**
+
+**Commits:**
+- `feat(voice): add room audio isolation (Milestone 11)`
+
 ---
+
+## Upcoming Milestones
 
 ### Milestone 12: YouTube Music Player
 **Status:** PLANNED
@@ -593,10 +610,10 @@ packages/client/src/
 - ✅ Room CRUD operations (18 tests)
 - ✅ DM functionality (19 tests)
 - ✅ Dice parser (27 tests)
-- ✅ Voice channels state (39 tests)
-- ✅ Voice socket events (13 tests)
+- ✅ Voice channels state (44 tests)
+- ✅ Voice socket events (18 tests)
 
-**Total:** 149 tests
+**Total:** 159 tests
 
 **Testing Strategy:**
 - Integration tests first (real server, real database)
@@ -638,17 +655,17 @@ packages/client/src/
 ## Current Status
 
 **Last Updated:** 2026-01-07
-**Completed Milestones:** 10/16
-**Progress:** 62.5%
-**Next Milestone:** Room Audio Isolation
+**Completed Milestones:** 11/16
+**Progress:** 68.75%
+**Next Milestone:** YouTube Music Player
 
 **Recent Activity:**
-- ✅ Implemented WebRTC voice signaling via Socket.IO
-- ✅ Built P2P mesh voice chat with VoiceManager class
-- ✅ Added Voice Activity Detection with Web Audio API
-- ✅ Created VoiceControls and VoiceParticipants UI components
-- ✅ Implemented Push-to-Talk mode with Space key
-- ✅ Added speaking indicators with animations
+- ✅ Implemented Room Audio Isolation (Milestone 11)
+- ✅ Added auto-leave voice when switching/leaving rooms
+- ✅ Added `getUserVoiceRoom` for tracking user's voice room
+- ✅ Updated client to cleanup peer connections on room change
+- ✅ Added 10 new tests for room audio isolation
+- ✅ 159 tests passing
 
 ---
 
