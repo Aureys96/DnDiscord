@@ -5,9 +5,11 @@ import { useAuthStore } from '../stores/authStore';
 import { useChatStore } from '../stores/chatStore';
 import { useRoomStore } from '../stores/roomStore';
 import { useDMStore } from '../stores/dmStore';
+import { useVoiceStore } from '../stores/voiceStore';
 import { ChatContainer } from '../components/features/chat';
 import { RoomList } from '../components/features/rooms';
 import { ConversationList, DMChat } from '../components/features/dms';
+import { VoiceParticipants } from '../components/features/voice';
 import type { Conversation } from '@dnd-voice/shared';
 
 type ActiveTab = 'rooms' | 'dms';
@@ -18,6 +20,7 @@ export function HomePage() {
   const { setCurrentRoom } = useChatStore();
   const { joinRoom, leaveRoom } = useRoomStore();
   const { currentConversation, setCurrentConversation, totalUnreadCount, clearMessages } = useDMStore();
+  const { isInVoice } = useVoiceStore();
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('rooms');
   const [viewMode, setViewMode] = useState<ViewMode>('rooms');
@@ -151,6 +154,13 @@ export function HomePage() {
               <ConversationList onSelectConversation={handleSelectConversation} />
             )}
           </div>
+
+          {/* Voice Participants - show when in voice */}
+          {isInVoice && (
+            <div className="flex-shrink-0 p-3 border-t border-gray-700 bg-gray-800/50">
+              <VoiceParticipants />
+            </div>
+          )}
         </aside>
 
         {/* Main Panel */}

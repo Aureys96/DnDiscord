@@ -228,3 +228,155 @@ export function emitDMTypingStart(recipientId: number): void {
 export function emitDMTypingStop(recipientId: number): void {
   socket?.emit('dm_typing_stop', { recipientId });
 }
+
+// ==================== Voice Channel Types ====================
+
+export interface VoiceUser {
+  userId: number;
+  username: string;
+  role: 'dm' | 'player';
+  isMuted: boolean;
+  isSpeaking: boolean;
+}
+
+export interface VoiceUserJoinedEvent {
+  roomId: number;
+  user: VoiceUser;
+}
+
+export interface VoiceUserLeftEvent {
+  roomId: number;
+  userId: number;
+  username: string;
+}
+
+export interface VoiceOfferEvent {
+  fromUserId: number;
+  fromUsername: string;
+  offer: RTCSessionDescriptionInit;
+}
+
+export interface VoiceAnswerEvent {
+  fromUserId: number;
+  answer: RTCSessionDescriptionInit;
+}
+
+export interface VoiceIceCandidateEvent {
+  fromUserId: number;
+  candidate: RTCIceCandidateInit;
+}
+
+export interface VoiceStateChangedEvent {
+  roomId: number;
+  userId: number;
+  isMuted: boolean;
+}
+
+export interface VoiceSpeakingChangedEvent {
+  roomId: number;
+  userId: number;
+  isSpeaking: boolean;
+}
+
+// ==================== Voice Channel Functions ====================
+
+export function joinVoice(
+  roomId: number
+): Promise<{ success: boolean; roomId?: number; voiceUsers?: VoiceUser[]; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected to server' });
+      return;
+    }
+
+    socket.emit('voice_join', { roomId }, (response: { success: boolean; roomId?: number; voiceUsers?: VoiceUser[]; error?: string }) => {
+      resolve(response);
+    });
+  });
+}
+
+export function leaveVoice(
+  roomId: number
+): Promise<{ success: boolean; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected to server' });
+      return;
+    }
+
+    socket.emit('voice_leave', { roomId }, (response: { success: boolean; error?: string }) => {
+      resolve(response);
+    });
+  });
+}
+
+export function sendVoiceOffer(
+  targetUserId: number,
+  offer: RTCSessionDescriptionInit
+): Promise<{ success: boolean; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected to server' });
+      return;
+    }
+
+    socket.emit('voice_offer', { targetUserId, offer }, (response: { success: boolean; error?: string }) => {
+      resolve(response);
+    });
+  });
+}
+
+export function sendVoiceAnswer(
+  targetUserId: number,
+  answer: RTCSessionDescriptionInit
+): Promise<{ success: boolean; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected to server' });
+      return;
+    }
+
+    socket.emit('voice_answer', { targetUserId, answer }, (response: { success: boolean; error?: string }) => {
+      resolve(response);
+    });
+  });
+}
+
+export function sendVoiceIceCandidate(
+  targetUserId: number,
+  candidate: RTCIceCandidateInit
+): Promise<{ success: boolean; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected to server' });
+      return;
+    }
+
+    socket.emit('voice_ice_candidate', { targetUserId, candidate }, (response: { success: boolean; error?: string }) => {
+      resolve(response);
+    });
+  });
+}
+
+export function emitVoiceStateUpdate(roomId: number, isMuted: boolean): void {
+  socket?.emit('voice_state_update', { roomId, isMuted });
+}
+
+export function emitVoiceSpeaking(roomId: number, isSpeaking: boolean): void {
+  socket?.emit('voice_speaking', { roomId, isSpeaking });
+}
+
+export function getVoiceUsers(
+  roomId: number
+): Promise<{ success: boolean; voiceUsers?: VoiceUser[]; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected to server' });
+      return;
+    }
+
+    socket.emit('voice_get_users', { roomId }, (response: { success: boolean; voiceUsers?: VoiceUser[]; error?: string }) => {
+      resolve(response);
+    });
+  });
+}

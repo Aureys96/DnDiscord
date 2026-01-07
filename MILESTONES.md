@@ -381,58 +381,98 @@ packages/client/src/
 
 ---
 
-## Upcoming Milestones
+### ✅ Milestone 8: WebRTC Voice - Signaling
+**Status:** COMPLETED
+**Completed:** 2026-01-07
 
-### Milestone 8: WebRTC Voice - Signaling
-**Status:** PLANNED
-
-**Goals:**
+**Implemented:**
 - WebRTC signaling server with Socket.IO
-- Offer/Answer exchange
-- ICE candidate exchange
-- Connection state management
-
-**Deliverables:**
-- Signaling protocol implementation
-- Peer connection setup
-- STUN server configuration (Google's public STUN)
+- Offer/Answer/ICE candidate exchange
+- Voice channel state management per room
 - Connection state tracking
 
+**Backend:**
+- `voiceChannels.ts` - Voice state management (users per room)
+- Socket events: `voice_join`, `voice_leave`, `voice_offer`, `voice_answer`, `voice_ice_candidate`
+- Broadcast events: `voice_user_joined`, `voice_user_left`, `voice_state_changed`, `voice_speaking_changed`
+- Automatic cleanup on user disconnect
+
+**File Structure:**
+```
+packages/server/src/socket/
+├── index.ts           # Updated with voice signaling events
+└── voiceChannels.ts   # Voice state management
+```
+
+**Commits:**
+- `feat(voice): add WebRTC voice chat with P2P mesh`
+
 ---
 
-### Milestone 9: WebRTC Voice - P2P Mesh
-**Status:** PLANNED
+### ✅ Milestone 9: WebRTC Voice - P2P Mesh
+**Status:** COMPLETED
+**Completed:** 2026-01-07
 
-**Goals:**
+**Implemented:**
 - P2P mesh topology for voice (max 6 users)
-- Audio stream capture and transmission
-- Audio playback from peers
+- Audio capture with echo cancellation, noise suppression, auto gain control
+- Peer-to-peer audio connections via WebRTC
 - Mute/unmute functionality
+- Push-to-talk (PTT) mode with Space key
 
-**Deliverables:**
-- MediaStream capture (getUserMedia)
-- Peer-to-peer audio connections
-- Audio mixing and playback
-- Mute/unmute controls
-- Push-to-talk (PTT) option
+**Frontend Components:**
+- `VoiceManager` class - WebRTC peer connection management
+- `VoiceControls` - Join/Leave button, Mute toggle, PTT mode switcher
+- `VoiceParticipants` - User list with speaking indicators
+- `voiceStore` - Zustand store for voice state
+
+**WebRTC Configuration:**
+- STUN servers: Google public STUN (stun.l.google.com)
+- Audio constraints: echoCancellation, noiseSuppression, autoGainControl
+- P2P mesh: Each user connects directly to every other user
+
+**File Structure:**
+```
+packages/client/src/
+├── lib/
+│   ├── socket.ts          # Added voice socket functions
+│   └── voiceManager.ts    # WebRTC peer connection management
+├── stores/
+│   └── voiceStore.ts      # Voice state management
+└── components/features/voice/
+    ├── VoiceControls.tsx  # Join/Mute/PTT controls
+    ├── VoiceParticipants.tsx  # User list with indicators
+    └── index.ts
+```
 
 ---
 
-### Milestone 10: Voice Activity Detection
-**Status:** PLANNED
+### ✅ Milestone 10: Voice Activity Detection
+**Status:** COMPLETED
+**Completed:** 2026-01-07
 
-**Goals:**
-- Detect when users are speaking
-- Visual indicators for active speakers
-- Configurable sensitivity
+**Implemented:**
+- Voice activity detection using Web Audio API (AnalyserNode)
+- Speaking indicators with green glow/ring animation
+- Push-to-talk mode as alternative to always-on
+- Configurable in voice settings dropdown
 
-**Deliverables:**
-- Voice activity detection algorithm
-- Speaking indicator UI
-- Sensitivity settings
-- Noise gate implementation
+**Technical Details:**
+- FFT-based audio level analysis (256-point FFT)
+- Threshold-based speaking detection (15 average level)
+- 100ms check interval for real-time responsiveness
+- Speaking state broadcast via Socket.IO
+
+**UI Features:**
+- Green ring around avatar when speaking
+- Pulsing animation for active speakers
+- Compact view (avatars only) and full view (list with status)
+- Mute indicator (red mic icon)
+- Connection state indicators (connecting, connected, failed)
 
 ---
+
+## Upcoming Milestones
 
 ### Milestone 11: Room Audio Isolation
 **Status:** PLANNED
@@ -596,15 +636,134 @@ packages/client/src/
 ## Current Status
 
 **Last Updated:** 2026-01-07
-**Completed Milestones:** 7/16
-**Progress:** 43.75%
-**Next Milestone:** WebRTC Voice - Signaling
+**Completed Milestones:** 10/16
+**Progress:** 62.5%
+**Next Milestone:** Room Audio Isolation
 
 **Recent Activity:**
-- ✅ Created dice parser with support for RPG notation (2d6, 1d20+5, 4d6kh3)
-- ✅ Added /roll and /r commands for dice rolling
-- ✅ Implemented inline dice notation [[2d6+3]]
-- ✅ Built DiceRollDisplay component with critical hit/miss styling
-- ✅ Integrated dice roller with Socket.IO message flow
-- ✅ Added 27 tests for dice parser
-- ✅ Roll results stored in database as JSON
+- ✅ Implemented WebRTC voice signaling via Socket.IO
+- ✅ Built P2P mesh voice chat with VoiceManager class
+- ✅ Added Voice Activity Detection with Web Audio API
+- ✅ Created VoiceControls and VoiceParticipants UI components
+- ✅ Implemented Push-to-Talk mode with Space key
+- ✅ Added speaking indicators with animations
+
+---
+
+## Optional Milestones
+
+### Optional: Audio Enhancements
+**Status:** OPTIONAL / FUTURE
+
+**Overview:**
+Advanced audio processing features that can be implemented client-side using Web Audio API. These enhance voice quality without requiring server changes (P2P architecture).
+
+**Potential Enhancements:**
+
+#### 1. Per-User Volume Control
+- Individual volume sliders for each participant
+- Uses GainNode per remote audio stream
+- Range: 0% to 200% (boost quiet users)
+
+#### 2. ML-Based Noise Suppression (RNNoise)
+- Client-side ML model (~85KB) compiled to WebAssembly
+- Removes background noise: keyboard, fans, dogs, construction
+- Based on Mozilla's RNNoise (same creator as Opus codec)
+- No server required - runs entirely in browser
+- Libraries: `@jitsi/rnnoise-wasm`, `rnnoise-wasm`
+
+#### 3. Advanced Noise Gate
+- AudioWorklet-based noise gate processor
+- Configurable threshold, attack, release times
+- Cuts audio below threshold for true silence
+- Prevents breathing/ambient sounds when not speaking
+
+#### 4. Audio Compressor/Limiter
+- DynamicsCompressorNode for evening out volume
+- Prevents loud shouts from clipping
+- Boosts quiet speech for clarity
+- Configurable threshold, ratio, attack, release
+
+#### 5. High-Pass Filter
+- Removes low-frequency rumble (<80Hz)
+- Cuts AC hum, mic handling noise
+- BiquadFilterNode with highpass type
+
+#### 6. Spatial Audio (3D Positioning)
+- Position each user's voice in 3D space
+- Uses PannerNode with HRTF model
+- Could map to D&D battle map positions
+- Users "hear" where others are sitting
+
+#### 7. Voice Effects (Fun/Optional)
+- Pitch shifting for character voices
+- Reverb for dungeon atmosphere
+- Radio/walkie-talkie effect
+- Monster voice filters for DM
+
+**Technical Architecture:**
+```
+Microphone
+    │
+    ▼
+┌─────────────────────────────────────────────────┐
+│  LOCAL PROCESSING CHAIN (before WebRTC send)    │
+│                                                 │
+│  High-Pass Filter (80Hz)                        │
+│       │                                         │
+│       ▼                                         │
+│  RNNoise (ML noise suppression)                 │
+│       │                                         │
+│       ▼                                         │
+│  Noise Gate (cut silence)                       │
+│       │                                         │
+│       ▼                                         │
+│  Compressor (even out volume)                   │
+│       │                                         │
+│       ▼                                         │
+│  Limiter (prevent clipping)                     │
+│                                                 │
+└─────────────────────────────────────────────────┘
+    │
+    ▼
+WebRTC (to peers)
+
+
+WebRTC (from peers)
+    │
+    ▼
+┌─────────────────────────────────────────────────┐
+│  REMOTE PROCESSING CHAIN (after WebRTC recv)    │
+│                                                 │
+│  Per-User Volume (GainNode)                     │
+│       │                                         │
+│       ▼                                         │
+│  Spatial Panner (3D position, optional)         │
+│       │                                         │
+│       ▼                                         │
+│  Voice Effects (optional, fun)                  │
+│                                                 │
+└─────────────────────────────────────────────────┘
+    │
+    ▼
+Speakers
+```
+
+**Why Client-Side?**
+- Zero additional latency (no server round-trip)
+- Works offline once loaded
+- No server CPU/bandwidth costs
+- Privacy: audio never touches server
+- Web Audio API is powerful and well-supported
+
+**Implementation Notes:**
+- All processing uses native Web Audio API
+- RNNoise requires WebAssembly support (all modern browsers)
+- AudioWorklet for custom processors (noise gate)
+- Can be toggled on/off per feature
+- Settings stored in localStorage
+
+**References:**
+- RNNoise: https://jmvalin.ca/demo/rnnoise/
+- Web Audio API: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API
+- AudioWorklet: https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet

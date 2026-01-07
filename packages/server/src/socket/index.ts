@@ -3,6 +3,16 @@ import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { getMessageQueries, getDMQueries, getConversationQueries, getUserQueries } from '../db/index.js';
 import { extractDiceCommand, parseAndRoll, formatRollResult, type DiceRollResult } from '@dnd-voice/shared';
+import {
+  getVoiceUsers,
+  addUserToVoice,
+  removeUserFromVoice,
+  removeUserFromAllVoice,
+  updateUserMuteState,
+  updateUserSpeakingState,
+  isUserInVoice,
+  type VoiceUser,
+} from './voiceChannels.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-please-change-in-production';
 
@@ -40,6 +50,48 @@ interface DMMessageResponse {
   type: 'dm';
   username: string;
   userRole: string;
+}
+
+// Voice signaling payload types
+interface VoiceJoinPayload {
+  roomId: number;
+}
+
+// WebRTC types for signaling (server just relays these, doesn't need full types)
+interface RTCSessionDescriptionLike {
+  type: string;
+  sdp?: string;
+}
+
+interface RTCIceCandidateLike {
+  candidate?: string;
+  sdpMid?: string | null;
+  sdpMLineIndex?: number | null;
+}
+
+interface VoiceOfferPayload {
+  targetUserId: number;
+  offer: RTCSessionDescriptionLike;
+}
+
+interface VoiceAnswerPayload {
+  targetUserId: number;
+  answer: RTCSessionDescriptionLike;
+}
+
+interface VoiceIceCandidatePayload {
+  targetUserId: number;
+  candidate: RTCIceCandidateLike;
+}
+
+interface VoiceStateUpdatePayload {
+  roomId: number;
+  isMuted: boolean;
+}
+
+interface VoiceSpeakingPayload {
+  roomId: number;
+  isSpeaking: boolean;
 }
 
 interface MessageResponse {
@@ -485,9 +537,233 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
       }
     });
 
+    // ==================== Voice Channel Events ====================
+
+    // Handle joining voice channel
+    authSocket.on('voice_join', (payload: VoiceJoinPayload, callback) => {
+      try {
+        const { roomId } = payload;
+
+        if (!roomId || typeof roomId !== 'number') {
+          return callback?.({ error: 'Invalid room ID' });
+        }
+
+        // Check if user is in the room
+        const currentRoomId = userCurrentRoom.get(user.id);
+        if (currentRoomId !== roomId) {
+          return callback?.({ error: 'You must be in the room to join voice' });
+        }
+
+        // Check if already in voice
+        if (isUserInVoice(roomId, user.id)) {
+          return callback?.({ error: 'Already in voice channel' });
+        }
+
+        // Get existing voice users before adding
+        const existingUsers = getVoiceUsers(roomId);
+
+        // Add user to voice channel
+        const voiceUser = addUserToVoice(roomId, user.id, user.username, user.role);
+
+        // Notify others in room that user joined voice
+        io.to(`room:${roomId}`).emit('voice_user_joined', {
+          roomId,
+          user: voiceUser,
+        });
+
+        console.log(`✓ ${user.username} joined voice in room ${roomId}`);
+
+        // Return success with list of existing voice users (for peer connection setup)
+        callback?.({
+          success: true,
+          roomId,
+          voiceUsers: existingUsers,
+        });
+      } catch (error) {
+        console.error('Error joining voice:', error);
+        callback?.({ error: 'Failed to join voice channel' });
+      }
+    });
+
+    // Handle leaving voice channel
+    authSocket.on('voice_leave', (payload: { roomId: number }, callback) => {
+      try {
+        const { roomId } = payload;
+
+        if (!roomId || typeof roomId !== 'number') {
+          return callback?.({ error: 'Invalid room ID' });
+        }
+
+        // Remove user from voice
+        const removed = removeUserFromVoice(roomId, user.id);
+
+        if (removed) {
+          // Notify others in room
+          io.to(`room:${roomId}`).emit('voice_user_left', {
+            roomId,
+            userId: user.id,
+            username: user.username,
+          });
+
+          console.log(`✗ ${user.username} left voice in room ${roomId}`);
+        }
+
+        callback?.({ success: true });
+      } catch (error) {
+        console.error('Error leaving voice:', error);
+        callback?.({ error: 'Failed to leave voice channel' });
+      }
+    });
+
+    // Handle WebRTC offer (relay to target user)
+    authSocket.on('voice_offer', (payload: VoiceOfferPayload, callback) => {
+      try {
+        const { targetUserId, offer } = payload;
+
+        if (!targetUserId || !offer) {
+          return callback?.({ error: 'Invalid offer payload' });
+        }
+
+        const targetSocket = connectedUsers.get(targetUserId);
+        if (!targetSocket) {
+          return callback?.({ error: 'Target user not connected' });
+        }
+
+        // Relay offer to target user
+        targetSocket.emit('voice_offer', {
+          fromUserId: user.id,
+          fromUsername: user.username,
+          offer,
+        });
+
+        callback?.({ success: true });
+      } catch (error) {
+        console.error('Error relaying voice offer:', error);
+        callback?.({ error: 'Failed to relay offer' });
+      }
+    });
+
+    // Handle WebRTC answer (relay to target user)
+    authSocket.on('voice_answer', (payload: VoiceAnswerPayload, callback) => {
+      try {
+        const { targetUserId, answer } = payload;
+
+        if (!targetUserId || !answer) {
+          return callback?.({ error: 'Invalid answer payload' });
+        }
+
+        const targetSocket = connectedUsers.get(targetUserId);
+        if (!targetSocket) {
+          return callback?.({ error: 'Target user not connected' });
+        }
+
+        // Relay answer to target user
+        targetSocket.emit('voice_answer', {
+          fromUserId: user.id,
+          answer,
+        });
+
+        callback?.({ success: true });
+      } catch (error) {
+        console.error('Error relaying voice answer:', error);
+        callback?.({ error: 'Failed to relay answer' });
+      }
+    });
+
+    // Handle ICE candidate exchange
+    authSocket.on('voice_ice_candidate', (payload: VoiceIceCandidatePayload, callback) => {
+      try {
+        const { targetUserId, candidate } = payload;
+
+        if (!targetUserId || !candidate) {
+          return callback?.({ error: 'Invalid ICE candidate payload' });
+        }
+
+        const targetSocket = connectedUsers.get(targetUserId);
+        if (!targetSocket) {
+          return callback?.({ error: 'Target user not connected' });
+        }
+
+        // Relay ICE candidate to target user
+        targetSocket.emit('voice_ice_candidate', {
+          fromUserId: user.id,
+          candidate,
+        });
+
+        callback?.({ success: true });
+      } catch (error) {
+        console.error('Error relaying ICE candidate:', error);
+        callback?.({ error: 'Failed to relay ICE candidate' });
+      }
+    });
+
+    // Handle voice state update (mute/unmute)
+    authSocket.on('voice_state_update', (payload: VoiceStateUpdatePayload) => {
+      const { roomId, isMuted } = payload;
+
+      if (!roomId || typeof roomId !== 'number') return;
+
+      // Update state
+      updateUserMuteState(roomId, user.id, isMuted);
+
+      // Broadcast to room
+      io.to(`room:${roomId}`).emit('voice_state_changed', {
+        roomId,
+        userId: user.id,
+        isMuted,
+      });
+    });
+
+    // Handle speaking state update (for speaking indicators)
+    authSocket.on('voice_speaking', (payload: VoiceSpeakingPayload) => {
+      const { roomId, isSpeaking } = payload;
+
+      if (!roomId || typeof roomId !== 'number') return;
+
+      // Update state
+      updateUserSpeakingState(roomId, user.id, isSpeaking);
+
+      // Broadcast to room
+      io.to(`room:${roomId}`).emit('voice_speaking_changed', {
+        roomId,
+        userId: user.id,
+        isSpeaking,
+      });
+    });
+
+    // Get current voice users in a room
+    authSocket.on('voice_get_users', (payload: { roomId: number }, callback) => {
+      try {
+        const { roomId } = payload;
+
+        if (!roomId || typeof roomId !== 'number') {
+          return callback?.({ error: 'Invalid room ID' });
+        }
+
+        const voiceUsers = getVoiceUsers(roomId);
+        callback?.({ success: true, voiceUsers });
+      } catch (error) {
+        console.error('Error getting voice users:', error);
+        callback?.({ error: 'Failed to get voice users' });
+      }
+    });
+
+    // ==================== End Voice Channel Events ====================
+
     // Handle disconnect
     authSocket.on('disconnect', () => {
       console.log(`✗ User disconnected: ${user.username} (ID: ${user.id})`);
+
+      // Clean up voice channel membership
+      const voiceRoomsLeft = removeUserFromAllVoice(user.id);
+      for (const roomId of voiceRoomsLeft) {
+        io.to(`room:${roomId}`).emit('voice_user_left', {
+          roomId,
+          userId: user.id,
+          username: user.username,
+        });
+        console.log(`✗ ${user.username} disconnected from voice in room ${roomId}`);
+      }
 
       // Clean up room membership
       const currentRoomId = userCurrentRoom.get(user.id);

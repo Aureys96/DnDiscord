@@ -4,6 +4,7 @@ import { useChatStore } from '../../../stores/chatStore';
 import { useRoomStore } from '../../../stores/roomStore';
 import { MessageList } from './MessageList';
 import { ChatInput } from './ChatInput';
+import { VoiceControls } from '../voice';
 
 interface ChatContainerProps {
   roomId?: number | null;
@@ -111,12 +112,19 @@ export function ChatContainer({ roomId }: ChatContainerProps) {
             <h2 className="font-medium text-gray-100">Global Chat</h2>
           </>
         )}
-        {isConnected && (
-          <span className="ml-auto flex items-center gap-1 text-xs text-emerald-400">
-            <span className="w-2 h-2 bg-emerald-400 rounded-full" />
-            Connected
-          </span>
-        )}
+
+        <div className="ml-auto flex items-center gap-3">
+          {/* Voice Controls - only show in rooms */}
+          {currentRoom && <VoiceControls roomId={currentRoom.id} />}
+
+          {/* Connection status */}
+          {isConnected && (
+            <span className="flex items-center gap-1 text-xs text-emerald-400">
+              <span className="w-2 h-2 bg-emerald-400 rounded-full" />
+              Connected
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Connection status / Error */}
