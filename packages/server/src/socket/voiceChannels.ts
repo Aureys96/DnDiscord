@@ -135,3 +135,10 @@ export function getVoiceUserCount(roomId: number): number {
 export function hasVoiceUsers(roomId: number): boolean {
   return getVoiceUserCount(roomId) > 0;
 }
+
+/**
+ * Clear all voice state (for testing only)
+ */
+export function clearAllVoiceState(): void {
+  voiceUsers.clear();
+}

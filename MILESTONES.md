@@ -593,8 +593,10 @@ packages/client/src/
 - ✅ Room CRUD operations (18 tests)
 - ✅ DM functionality (19 tests)
 - ✅ Dice parser (27 tests)
+- ✅ Voice channels state (39 tests)
+- ✅ Voice socket events (13 tests)
 
-**Total:** 97 tests passing
+**Total:** 149 tests
 
 **Testing Strategy:**
 - Integration tests first (real server, real database)
