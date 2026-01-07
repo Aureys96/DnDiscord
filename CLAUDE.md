@@ -43,6 +43,8 @@ cd packages/server && npm run test && cd ../.. && npm run lint && npm run format
 - This allows easy rollback if anything goes wrong
 - Follow conventional commits format: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`
 - Each commit should represent a working state
+- **Do not ask for approval on each commit** - just commit when work is done
+- **Only ask for approval before the final push to remote** (or push without asking if user already requested it)
 
 ## Project Structure
 

@@ -1051,20 +1051,56 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
         };
 
         let state: MusicState;
+        let shouldAutoPlay = false;
+
         if (scope === "global") {
+          const currentState = getGlobalMusicState();
+          shouldAutoPlay = !currentState.currentTrack;
           state = addToGlobalQueue(track);
         } else if (roomId) {
+          const currentState = getRoomMusicState(roomId);
+          shouldAutoPlay = !currentState?.currentTrack;
           state = addToRoomQueue(roomId, track);
         } else {
           return callback?.({ error: "Room ID required for room scope" });
         }
 
-        // Broadcast queue update
-        const queueEvent = { scope, roomId, queue: state.queue };
-        if (scope === "global") {
-          io.to("global").emit("music_queue_updated", queueEvent);
-        } else if (roomId) {
-          io.to(`room:${roomId}`).emit("music_queue_updated", queueEvent);
+        // If nothing was playing, auto-start the added track
+        if (shouldAutoPlay) {
+          if (scope === "global") {
+            state = playGlobalMusic();
+          } else if (roomId) {
+            state = playRoomMusic(roomId);
+          }
+
+          // Get audio URL for immediate playback
+          let audioUrl: string | undefined;
+          try {
+            const audioInfo = await extractAudioUrl(youtubeUrl);
+            audioUrl = audioInfo.audioUrl;
+          } catch (error) {
+            console.error("Error extracting audio URL:", error);
+          }
+
+          // Broadcast state change (includes currentTrack)
+          const stateEvent = { scope, roomId, state, audioUrl };
+          if (scope === "global") {
+            io.to("global").emit("music_state_changed", stateEvent);
+          } else if (roomId) {
+            io.to(`room:${roomId}`).emit("music_state_changed", stateEvent);
+          }
+
+          console.log(
+            `▶️ Auto-playing "${track.title}" (${scope} was empty)`,
+          );
+        } else {
+          // Broadcast queue update only
+          const queueEvent = { scope, roomId, queue: state.queue };
+          if (scope === "global") {
+            io.to("global").emit("music_queue_updated", queueEvent);
+          } else if (roomId) {
+            io.to(`room:${roomId}`).emit("music_queue_updated", queueEvent);
+          }
         }
 
         console.log(

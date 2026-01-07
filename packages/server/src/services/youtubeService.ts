@@ -101,8 +101,6 @@ export async function extractAudioUrl(
       noCheckCertificates: true,
       noWarnings: true,
       preferFreeFormats: true,
-      // Get the direct URL
-      getUrl: false, // We'll get URL from the JSON output
     })) as {
       url?: string;
       title?: string;
