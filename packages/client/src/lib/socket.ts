@@ -5,6 +5,20 @@ const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 let socket: Socket | null = null;
 
+export interface DiceRollResult {
+  formula: string;
+  rolls: Array<{
+    dice: string;
+    results: number[];
+    kept?: number[];
+    subtotal: number;
+  }>;
+  modifier: number;
+  total: number;
+  criticalHit?: boolean;
+  criticalMiss?: boolean;
+}
+
 export interface ChatMessage {
   id: number;
   roomId: number | null;
@@ -14,6 +28,7 @@ export interface ChatMessage {
   type: string;
   username: string;
   userRole: string;
+  rollResult?: DiceRollResult;
 }
 
 export interface UserJoinedEvent {

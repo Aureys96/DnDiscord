@@ -2,6 +2,7 @@ import { Server as HTTPServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { getMessageQueries, getDMQueries, getConversationQueries, getUserQueries } from '../db/index.js';
+import { extractDiceCommand, parseAndRoll, formatRollResult, type DiceRollResult } from '@dnd-voice/shared';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-please-change-in-production';
 
@@ -50,6 +51,7 @@ interface MessageResponse {
   type: string;
   username: string;
   userRole: string;
+  rollResult?: DiceRollResult;
 }
 
 // Store connected users
@@ -143,16 +145,31 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
           return callback?.({ error: 'Message too long (max 2000 characters)' });
         }
 
+        // Check for dice roll command
+        const diceNotation = extractDiceCommand(content.trim());
+        let rollResult: DiceRollResult | null = null;
+        let messageContent = content.trim();
+        let messageType: string = type;
+
+        if (diceNotation) {
+          rollResult = parseAndRoll(diceNotation);
+          if (rollResult) {
+            // Format the roll result as human-readable content
+            messageContent = formatRollResult(rollResult);
+            messageType = 'roll';
+          }
+        }
+
         const queries = getMessageQueries();
 
         // Insert message into database
         const result = queries.create.run(
-          type === 'room' ? roomId : null,
+          type === 'room' ? roomId : null, // Use original type for room context
           user.id,
-          content.trim(),
-          type,
+          messageContent,
+          messageType,
           null, // recipient_id (for DMs)
-          null  // roll_result
+          rollResult ? JSON.stringify(rollResult) : null // roll_result
         );
 
         // Get the created message with user info
@@ -165,6 +182,7 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
           type: string;
           username: string;
           user_role: string;
+          roll_result: string | null;
         };
 
         const messageResponse: MessageResponse = {
@@ -176,6 +194,7 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
           type: message.type,
           username: message.username,
           userRole: message.user_role,
+          rollResult: message.roll_result ? JSON.parse(message.roll_result) : undefined,
         };
 
         // Broadcast to appropriate room
@@ -207,6 +226,7 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
           type: string;
           username: string;
           user_role: string;
+          roll_result: string | null;
         }>;
 
         if (type === 'global') {
@@ -228,6 +248,7 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
             type: m.type,
             username: m.username,
             userRole: m.user_role,
+            rollResult: m.roll_result ? JSON.parse(m.roll_result) : undefined,
           }))
           .reverse();
 

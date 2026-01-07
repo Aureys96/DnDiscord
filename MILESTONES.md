@@ -320,25 +320,68 @@ packages/client/src/
 **Commits:**
 - `feat(dms): add direct messaging with real-time delivery`
 
+### ✅ Milestone 7: Dice Roller
+**Status:** COMPLETED
+**Completed:** 2026-01-07
+
+**Implemented:**
+- Dice roll syntax parser supporting standard RPG notation
+- Roll visualization in chat with styled display
+- Critical hit/miss detection and highlighting
+- Support for keep highest/lowest modifiers (4d6kh3)
+- Drop lowest shorthand (4d6-L)
+- Inline dice notation [[2d6+3]]
+
+**Features:**
+- `/roll 2d6+3` or `/r 1d20` commands
+- Inline dice notation `[[2d6]]` in messages
+- Support for: d4, d6, d8, d10, d12, d20, d100 (any sides 2-1000)
+- Keep highest: `4d6kh3` (roll 4d6, keep highest 3)
+- Keep lowest: `4d6kl1` (roll 4d6, keep lowest 1)
+- Drop lowest: `4d6-L` (same as 4d6kh3)
+- Positive/negative modifiers: `1d20+5`, `2d6-2`
+- Critical hit detection (natural 20 on d20)
+- Critical miss detection (natural 1 on d20)
+
+**Frontend Components:**
+- `DiceRollDisplay` - Styled roll result visualization
+- Individual dice display with color coding (green=max, red=min)
+- Strikethrough for dropped dice
+- Large total display with critical highlighting
+- Animated "Critical Hit!" / "Critical Miss!" indicators
+
+**Backend:**
+- `@dnd-voice/shared` dice parser (parseDiceNotation, rollDice, parseAndRoll)
+- Socket.IO integration for roll command detection
+- Roll results stored in database as JSON
+- Type 'roll' for dice roll messages
+
+**Tests:**
+- 27 new tests for dice parser
+- **97 tests passing**
+
+**File Structure:**
+```
+packages/shared/src/
+├── dice.ts              # Dice parser and roller
+└── index.ts             # Re-exports dice functions
+
+packages/server/src/
+├── socket/index.ts      # Updated with dice roll detection
+└── dice.test.ts         # Dice parser tests
+
+packages/client/src/
+├── lib/socket.ts        # DiceRollResult interface
+└── components/features/chat/
+    └── MessageList.tsx  # DiceRollDisplay component
+```
+
+**Commits:**
+- `feat(dice): add dice roller with parser and chat integration`
+
 ---
 
 ## Upcoming Milestones
-
-### Milestone 7: Dice Roller
-**Status:** NEXT UP
-
-**Goals:**
-- Dice roll syntax parser (e.g., "2d6+3", "1d20")
-- Roll visualization in chat
-- Roll history
-
-**Deliverables:**
-- Dice roll parser
-- Roll command in chat (/roll or dice syntax)
-- Roll result display with animation
-- Support for standard RPG dice (d4, d6, d8, d10, d12, d20, d100)
-
----
 
 ### Milestone 8: WebRTC Voice - Signaling
 **Status:** PLANNED
@@ -509,8 +552,9 @@ packages/client/src/
 - ✅ JWT middleware (13 tests)
 - ✅ Room CRUD operations (18 tests)
 - ✅ DM functionality (19 tests)
+- ✅ Dice parser (27 tests)
 
-**Total:** 70 tests passing
+**Total:** 97 tests passing
 
 **Testing Strategy:**
 - Integration tests first (real server, real database)
@@ -552,15 +596,15 @@ packages/client/src/
 ## Current Status
 
 **Last Updated:** 2026-01-07
-**Completed Milestones:** 6/16
-**Progress:** 37.5%
-**Next Milestone:** Dice Roller
+**Completed Milestones:** 7/16
+**Progress:** 43.75%
+**Next Milestone:** WebRTC Voice - Signaling
 
 **Recent Activity:**
-- ✅ Added conversations and conversation_reads tables for DMs
-- ✅ Implemented DM REST API endpoints (CRUD, send, read)
-- ✅ Added Socket.IO events for real-time DM delivery
-- ✅ Built ConversationList and DMChat UI components
-- ✅ Added unread message indicators with badge counts
-- ✅ Implemented tab-based sidebar (Channels / DMs)
-- ✅ Added 19 integration tests for DM functionality
+- ✅ Created dice parser with support for RPG notation (2d6, 1d20+5, 4d6kh3)
+- ✅ Added /roll and /r commands for dice rolling
+- ✅ Implemented inline dice notation [[2d6+3]]
+- ✅ Built DiceRollDisplay component with critical hit/miss styling
+- ✅ Integrated dice roller with Socket.IO message flow
+- ✅ Added 27 tests for dice parser
+- ✅ Roll results stored in database as JSON

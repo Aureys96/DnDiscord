@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { Crown, User } from 'lucide-react';
-import type { ChatMessage } from '../../../lib/socket';
+import { Crown, User, Dices } from 'lucide-react';
+import type { ChatMessage, DiceRollResult } from '../../../lib/socket';
 
 interface MessageListProps {
   messages: ChatMessage[];
@@ -24,18 +24,97 @@ function formatTimestamp(timestamp: string): string {
   });
 }
 
+function DiceRollDisplay({ rollResult, username }: { rollResult: DiceRollResult; username: string }) {
+  return (
+    <div className={`rounded-lg border p-3 mt-1 ${
+      rollResult.criticalHit
+        ? 'bg-emerald-900/30 border-emerald-500/50'
+        : rollResult.criticalMiss
+          ? 'bg-red-900/30 border-red-500/50'
+          : 'bg-indigo-900/30 border-indigo-500/50'
+    }`}>
+      {/* Roll header */}
+      <div className="flex items-center gap-2 mb-2">
+        <Dices className={`w-5 h-5 ${
+          rollResult.criticalHit ? 'text-emerald-400' :
+          rollResult.criticalMiss ? 'text-red-400' : 'text-indigo-400'
+        }`} />
+        <span className="text-gray-400 text-sm">
+          {username} rolled <span className="font-mono text-gray-200">{rollResult.formula}</span>
+        </span>
+      </div>
+
+      {/* Individual dice results */}
+      <div className="flex flex-wrap gap-2 mb-2">
+        {rollResult.rolls.map((roll, rollIdx) => (
+          <div key={rollIdx} className="flex items-center gap-1">
+            <span className="text-gray-500 text-xs">{roll.dice}:</span>
+            <div className="flex gap-1">
+              {roll.results.map((result, dieIdx) => {
+                const isKept = !roll.kept || roll.kept.includes(result);
+                const isMax = result === parseInt(roll.dice.split('d')[1]);
+                const isMin = result === 1;
+                return (
+                  <span
+                    key={dieIdx}
+                    className={`
+                      inline-flex items-center justify-center w-6 h-6 rounded text-sm font-medium
+                      ${!isKept ? 'line-through opacity-50' : ''}
+                      ${isMax && isKept ? 'bg-emerald-500/30 text-emerald-300' : ''}
+                      ${isMin && isKept ? 'bg-red-500/30 text-red-300' : ''}
+                      ${!isMax && !isMin && isKept ? 'bg-gray-700 text-gray-200' : ''}
+                      ${!isKept ? 'bg-gray-800 text-gray-500' : ''}
+                    `}
+                  >
+                    {result}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+        {rollResult.modifier !== 0 && (
+          <span className="text-gray-400 text-sm self-center">
+            {rollResult.modifier > 0 ? '+' : ''}{rollResult.modifier}
+          </span>
+        )}
+      </div>
+
+      {/* Total */}
+      <div className="flex items-center gap-2">
+        <span className="text-gray-400 text-sm">Total:</span>
+        <span className={`text-2xl font-bold ${
+          rollResult.criticalHit ? 'text-emerald-400' :
+          rollResult.criticalMiss ? 'text-red-400' : 'text-white'
+        }`}>
+          {rollResult.total}
+        </span>
+        {rollResult.criticalHit && (
+          <span className="text-emerald-400 text-sm font-medium animate-pulse">Critical Hit!</span>
+        )}
+        {rollResult.criticalMiss && (
+          <span className="text-red-400 text-sm font-medium animate-pulse">Critical Miss!</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function MessageItem({ message }: { message: ChatMessage }) {
   const isDM = message.userRole === 'dm';
+  const isRoll = message.type === 'roll' && message.rollResult;
 
   return (
     <div className="group flex items-start gap-3 px-4 py-2 hover:bg-gray-800/50">
       {/* Avatar */}
       <div
         className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-          isDM ? 'bg-amber-500/20' : 'bg-violet-500/20'
+          isRoll ? 'bg-indigo-500/20' : isDM ? 'bg-amber-500/20' : 'bg-violet-500/20'
         }`}
       >
-        {isDM ? (
+        {isRoll ? (
+          <Dices className="w-5 h-5 text-indigo-400" />
+        ) : isDM ? (
           <Crown className="w-5 h-5 text-amber-500" />
         ) : (
           <User className="w-5 h-5 text-violet-500" />
@@ -54,9 +133,13 @@ function MessageItem({ message }: { message: ChatMessage }) {
             {formatTimestamp(message.timestamp)}
           </span>
         </div>
-        <p className="text-gray-100 break-words whitespace-pre-wrap">
-          {message.content}
-        </p>
+        {isRoll && message.rollResult ? (
+          <DiceRollDisplay rollResult={message.rollResult} username={message.username} />
+        ) : (
+          <p className="text-gray-100 break-words whitespace-pre-wrap">
+            {message.content}
+          </p>
+        )}
       </div>
     </div>
   );
