@@ -5,7 +5,7 @@ export default {
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^@dnd-voice/shared$': '<rootDir>/../shared/src/index.ts',
+    '^@dnd-voice/shared$': '<rootDir>/../shared/dist/index.js',
   },
   transform: {
     '^.+\\.tsx?$': [
