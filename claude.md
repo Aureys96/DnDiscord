@@ -1,5 +1,14 @@
 # Claude Code Guidelines for DnD Voice Chat
 
+## Critical Workflow Rules
+
+### ALWAYS Run Tests Before Pushing
+- **Before pushing ANY code to remote, run all tests and ensure they pass**
+- Server tests: `cd packages/server && npx jest --no-coverage --forceExit`
+- Client tests: `cd packages/client && npm test` (when available)
+- Never push broken code - this is a hard rule
+- If tests fail, fix them before committing/pushing
+
 ## Commit Philosophy
 - **Always commit meaningful changes with meaningful commit messages**
 - This allows easy rollback if anything goes wrong
